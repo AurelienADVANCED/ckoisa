@@ -7,6 +7,7 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons'; // or from 'react-native-vector-icons'
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -26,18 +27,30 @@ export default function TabLayout() {
           default: {},
         }),
       }}>
+
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Accueil',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="friendsscreen"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Mes amis',
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="users" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profilescreen"
+        options={{
+          title: 'Mon Profil',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="account" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

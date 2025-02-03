@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "e5-demo",
-    "slug": "e5-demo",
+    "name": "ckoisa",
+    "slug": "ckoisa",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,6 +9,10 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "infoPlist": {
+        "NSCameraUsageDescription": "Cette application a besoin d'accéder à la caméra pour prendre des photos.",
+        "NSPhotoLibraryUsageDescription": "Cette application a besoin d'accéder à la médiathèque pour sauvegarder les photos."
+      },
       "supportsTablet": true
     },
     "android": {
@@ -32,8 +36,24 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save photos."
+        }
       ]
     ],
+
     "experiments": {
       "typedRoutes": true
     }
