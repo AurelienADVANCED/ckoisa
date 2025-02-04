@@ -1,5 +1,6 @@
+// FriendsScreen.js
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, SafeAreaView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -8,6 +9,7 @@ interface Friend {
   id: string;
   name: string;
   status: 'online' | 'offline';
+  photo: string;
 }
 
 export default function FriendsScreen() {
@@ -15,10 +17,10 @@ export default function FriendsScreen() {
   const router = useRouter();
 
   const [friends, setFriends] = useState<Friend[]>([
-    { id: '1', name: 'Alice', status: 'online' },
-    { id: '2', name: 'Bob', status: 'offline' },
-    { id: '3', name: 'Charlie', status: 'online' },
-    { id: '4', name: 'David', status: 'offline' },
+    { id: '1', name: 'Alice', status: 'online', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
+    { id: '2', name: 'Bob', status: 'offline', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
+    { id: '3', name: 'Charlie', status: 'online', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
+    { id: '4', name: 'David', status: 'offline', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
   ]);
 
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'online' | 'offline'>('all');
@@ -28,14 +30,16 @@ export default function FriendsScreen() {
       { text: 'OK' }
     ]);
   };
-  
+
   const sendChallenge = (friend: Friend) => {
     router.push({
       pathname: '/challengescreen',
       params: {
         friendId: friend.id,
         friendName: friend.name,
+        friendPhoto: friend.photo,
         username: 'JohnDoe',
+        userPhoto: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg', 
       },
     });
   };
@@ -53,16 +57,19 @@ export default function FriendsScreen() {
 
   const renderItem = ({ item }: { item: Friend }) => (
     <View style={styles.friendItem}>
-      <Text style={styles.friendName}>{item.name}</Text>
-      <View style={styles.friendStatus}>
-        <Ionicons
-          name={item.status === 'online' ? 'person' : 'person-outline'}
-          size={16}
-          color={item.status === 'online' ? 'green' : 'gray'}
-        />
-        <Text style={styles.statusText}>
-          {item.status === 'online' ? 'En ligne' : 'Hors ligne'}
-        </Text>
+      <Image style={styles.avatar} source={{ uri: item.photo }} />
+      <View style={styles.infoContainer}>
+        <Text style={styles.friendName}>{item.name}</Text>
+        <View style={styles.friendStatus}>
+          <Ionicons
+            name={item.status === 'online' ? 'person' : 'person-outline'}
+            size={16}
+            color={item.status === 'online' ? 'green' : 'gray'}
+          />
+          <Text style={styles.statusText}>
+            {item.status === 'online' ? 'En ligne' : 'Hors ligne'}
+          </Text>
+        </View>
       </View>
       <TouchableOpacity onPress={() => sendChallenge(item)} style={styles.sendChallengeButton}>
         <Text style={styles.sendChallengeButtonText}>Défier</Text>
@@ -151,6 +158,15 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e0e0e0',
     width: '100%',
   },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  infoContainer: {
+    flex: 1,
+    marginLeft: 15,
+  },
   friendName: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -169,6 +185,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e91e63',
     borderRadius: 5,
     padding: 5,
+    paddingHorizontal: 10,
   },
   sendChallengeButtonText: {
     color: '#fff',
@@ -180,46 +197,5 @@ const styles = StyleSheet.create({
   },
   friendListContent: {
     flexGrow: 1,
-  },
-  gameModeSection: {
-    flex: 1,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    paddingTop: 20,
-  },
-  gameModeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 10,
-  },
-  gameModeButton: {
-    backgroundColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    width: '45%',
-    alignItems: 'center',
-  },
-  selectedModeButton: {
-    backgroundColor: '#e91e63',
-  },
-  gameModeButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  stepsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-  },
-  stepsLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  picker: {
-    width: 120,
-    height: 50,
   },
 });

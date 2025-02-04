@@ -1,92 +1,182 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert, Image } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
+import Toast from 'react-native-toast-message';
 
-export default function Game() {
-  const insets = useSafeAreaInsets();
+export default function ChallengeScreen() {
+    const [selectedGameMode, setSelectedGameMode] = useState<'floutee' | 'cachee'>('floutee');
+    const [selectedSteps, setSelectedSteps] = useState<number>(1);
+    const insets = useSafeAreaInsets();
+    const { friendName, username, friendPhoto, userPhoto } = useLocalSearchParams();
 
-  // États pour stocker le mode sélectionné et le nombre d'étapes
-  const [selectedMode, setSelectedMode] = useState('blurred');
-  const [steps, setSteps] = useState(3);
+    const gamemodes = [
+        { label: 'Floutée', value: 'floutee' },
+        { label: 'Cachée', value: 'cachee' },
+    ];
 
-  return (
-    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.gameModeSection}>
-        <View style={styles.gameModeContainer}>
-          <TouchableOpacity
-            style={[styles.gameModeButton, selectedMode === 'blurred' && styles.selectedModeButton]}
-            onPress={() => setSelectedMode('blurred')}
-          >
-            <Text style={styles.gameModeButtonText}>Floutée</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.gameModeButton, selectedMode === 'hidden' && styles.selectedModeButton]}
-            onPress={() => setSelectedMode('hidden')}
-          >
-            <Text style={styles.gameModeButtonText}>Cachée</Text>
-          </TouchableOpacity>
-        </View>
+    const handleSendChallenge = () => {
+        const message = `Défi envoyé à: ${friendName}\nMode de jeu: ${selectedGameMode.charAt(0).toUpperCase() + selectedGameMode.slice(1)}\nÉtapes: ${selectedSteps}`;
+        Toast.show({
+            type: 'success',
+            text1: 'Défi envoyé',
+            text2: message,
+            visibilityTime: 3000,
+            autoHide: true,
+            topOffset: insets.top + 30,
+            bottomOffset: 80,
+        });
+    };
 
-        <View style={styles.stepsContainer}>
-          <Text style={styles.stepsLabel}>Nombre d'étapes:</Text>
-          <Picker
-            selectedValue={steps}
-            onValueChange={(itemValue) => setSteps(Number(itemValue))}
-            mode={Platform.OS === 'ios' ? 'dropdown' : 'dialog'}
-            style={styles.picker}
-          >
-            <Picker.Item label="3" value={3} />
-            <Picker.Item label="4" value={4} />
-            <Picker.Item label="5" value={5} />
-            <Picker.Item label="6" value={6} />
-          </Picker>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
+    return (
+        <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+            <View style={styles.header}>
+                <Text style={styles.title}>Défi pour {friendName}</Text>
+                <View style={styles.avatarSection}>
+                    <View style={styles.avatarContainer}>
+                        <Image style={styles.avatar} source={{ uri: userPhoto }} />
+                        <Text style={styles.usernameLabel}>Toi</Text>
+                        <Text style={styles.username}>Par {username}</Text>
+                    </View>
+                    <View style={styles.avatarContainer}>
+                        <Image style={styles.avatar} source={{ uri: friendPhoto }} />
+                        <Text style={styles.usernameLabel}>Ami</Text>
+                        <Text style={styles.username}>{friendName}</Text>
+                    </View>
+                </View>
+            </View>
+            <View style={styles.gameModeSection}>
+                <Text style={styles.sectionTitle}>Choisir le mode de jeu</Text>
+                <View style={styles.gameModeContainer}>
+                    {gamemodes.map(mode => (
+                        <TouchableOpacity
+                            key={mode.value}
+                            style={[
+                                styles.gameModeButton,
+                                selectedGameMode === mode.value && styles.selectedGameModeButton,
+                            ]}
+                            onPress={() => setSelectedGameMode(mode.value)}
+                        >
+                            <Text style={styles.gameModeButtonText}>{mode.label}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            </View>
+            <View style={styles.stepsSection}>
+                <Text style={styles.sectionTitle}>Choisir le nombre d'étapes</Text>
+                <Picker
+                    selectedValue={selectedSteps}
+                    onValueChange={(itemValue) => setSelectedSteps(itemValue)}
+                    style={styles.picker}
+                    itemStyle={styles.pickerItem}
+                >
+                    {Array.from({ length: 8 }, (_, i) => i + 1).map(step => (
+                        <Picker.Item key={step} label={`${step}`} value={step} />
+                    ))}
+                </Picker>
+            </View>
+            <TouchableOpacity style={styles.sendChallengeButton} onPress={handleSendChallenge}>
+                <Text style={styles.sendChallengeButtonText}>Envoyer le défi</Text>
+            </TouchableOpacity>
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0'
-  },
-  gameModeSection: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  gameModeContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  gameModeButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginHorizontal: 5,
-  },
-  selectedModeButton: {
-    backgroundColor: '#0056b3', // Couleur plus foncée pour montrer la sélection
-  },
-  gameModeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  stepsContainer: {
-    alignItems: 'center',
-  },
-  stepsLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  picker: {
-    width: 150,
-    height: 40,
-  }
+    container: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+        padding: 20,
+    },
+    header: {
+        alignItems: 'center',
+        marginBottom: 30,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+    },
+    avatarSection: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        width: '100%',
+    },
+    avatarContainer: {
+        alignItems: 'center',
+    },
+    avatar: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        borderWidth: 2,
+        borderColor: '#ccc',
+        marginBottom: 5,
+    },
+    usernameLabel: {
+        fontSize: 16,
+        color: '#666',
+    },
+    username: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    sectionTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+    },
+    gameModeSection: {
+        marginBottom: 30,
+    },
+    gameModeContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+    },
+    gameModeButton: {
+        backgroundColor: '#e0e0e0',
+        borderRadius: 15,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+    },
+    selectedGameModeButton: {
+        backgroundColor: '#e91e63',
+    },
+    gameModeButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    stepsSection: {
+        marginBottom: 30,
+    },
+    picker: {
+        width: '100%',
+        height: 50,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 10,
+    },
+    pickerItem: {
+        color: '#000',
+    },
+    sendChallengeButton: {
+        backgroundColor: '#e91e63',
+        paddingVertical: 15,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginTop: 'auto',
+        marginBottom: 20,
+    },
+    sendChallengeButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
 });
