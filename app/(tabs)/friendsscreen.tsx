@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, SafeAreaView, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Picker } from '@react-native-picker/picker';
+import { useRouter } from 'expo-router';
 
 interface Friend {
   id: string;
@@ -12,6 +12,7 @@ interface Friend {
 
 export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const [friends, setFriends] = useState<Friend[]>([
     { id: '1', name: 'Alice', status: 'online' },
@@ -21,19 +22,22 @@ export default function FriendsScreen() {
   ]);
 
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'online' | 'offline'>('all');
-  const [selectedMode, setSelectedMode] = useState<'progressive' | 'decoupe'>('progressive');
-  const [steps, setSteps] = useState<number>(3);
 
   const addFriend = () => {
     Alert.alert('Ajouter un ami', 'Vous pouvez ajouter un ami ici', [
       { text: 'OK' }
     ]);
   };
-
+  
   const sendChallenge = (friend: Friend) => {
-    Alert.alert('Défi envoyé', `Défi envoyé à ${friend.name}`, [
-      { text: 'OK' }
-    ]);
+    router.push({
+      pathname: '/challengescreen',
+      params: {
+        friendId: friend.id,
+        friendName: friend.name,
+        username: 'JohnDoe',
+      },
+    });
   };
 
   const filterFriends = (filter: 'all' | 'online' | 'offline'): Friend[] => {
@@ -52,7 +56,7 @@ export default function FriendsScreen() {
       <Text style={styles.friendName}>{item.name}</Text>
       <View style={styles.friendStatus}>
         <Ionicons
-          name={item.status === 'online' ? 'ios-person' : 'ios-person-outline'}
+          name={item.status === 'online' ? 'person' : 'person-outline'}
           size={16}
           color={item.status === 'online' ? 'green' : 'gray'}
         />
@@ -69,7 +73,7 @@ export default function FriendsScreen() {
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <TouchableOpacity style={styles.addButton} onPress={addFriend}>
-        <Ionicons name="ios-add" size={24} color="#fff" />
+        <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>
       <View style={styles.filterContainer}>
         <TouchableOpacity

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 export default function ProfileScreen() {
   const [username, setUsername] = useState<string>('JohnDoe'); // Placeholder name
@@ -12,13 +11,7 @@ export default function ProfileScreen() {
   const [rank, setRank] = useState<number>(3); // Example data
 
   const insets = useSafeAreaInsets();
-
-  const editProfile = () => {
-    // Navigate to Edit Profile screen
-    Alert.alert('Edit Profile', 'Navigating to Edit Profile screen', [
-      { text: 'OK' }
-    ]);
-  };
+  const router = useRouter();
 
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
@@ -42,15 +35,12 @@ export default function ProfileScreen() {
         </View>
       </View>
       <View style={styles.settingsContainer}>
-        <TouchableOpacity style={styles.settingsButton} onPress={editProfile}>
+        <TouchableOpacity style={styles.settingsButton} onPress={() => router.push('/editprofilescreen')}>
           <Text style={styles.settingsButtonText}>Modifier mon profil</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingsButton}>
+        <TouchableOpacity style={styles.settingsButton} onPress={() => router.push('/settingsscreen')}>
           <Text style={styles.settingsButtonText}>Paramètres de confidentialité</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingsButton}>
-          <Text style={styles.settingsButtonText}>Notifications</Text>
-        </TouchableOpacity> 
       </View>
     </SafeAreaView>
   );
