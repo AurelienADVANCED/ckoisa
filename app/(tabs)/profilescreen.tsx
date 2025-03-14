@@ -4,11 +4,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 export default function ProfileScreen() {
-  const [username, setUsername] = useState<string>('JohnDoe'); // Placeholder name
-  const [challengesSent, setChallengesSent] = useState<number>(10); // Example data
-  const [successRate, setSuccessRate] = useState<number>(85); // Example data
-  const [points, setPoints] = useState<number>(250); // Example data
-  const [rank, setRank] = useState<number>(3); // Example data
+  const [username, setUsername] = useState<string>('JohnDoe');
+  const [challengesSent, setChallengesSent] = useState<number>(10); 
+  const [successRate, setSuccessRate] = useState<number>(85); 
+  const [points, setPoints] = useState<number>(250); 
+  const [rank, setRank] = useState<number>(3); 
 
   const insets = useSafeAreaInsets();
   const router = useRouter();

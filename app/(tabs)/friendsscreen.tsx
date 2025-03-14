@@ -26,9 +26,9 @@ export default function FriendsScreen() {
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'online' | 'offline'>('all');
 
   const addFriend = () => {
-    Alert.alert('Ajouter un ami', 'Vous pouvez ajouter un ami ici', [
-      { text: 'OK' }
-    ]);
+    router.push({
+      pathname: '/addfriendscreen',
+    });
   };
 
   const sendChallenge = (friend: Friend) => {
@@ -79,9 +79,7 @@ export default function FriendsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-      <TouchableOpacity style={styles.addButton} onPress={addFriend}>
-        <Ionicons name="add" size={24} color="#fff" />
-      </TouchableOpacity>
+      
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterButton, selectedFilter === 'all' && styles.selectedFilterButton]}
@@ -109,6 +107,9 @@ export default function FriendsScreen() {
         style={styles.friendList}
         contentContainerStyle={styles.friendListContent}
       />
+      <TouchableOpacity style={styles.addButton} onPress={addFriend}>
+        <Ionicons name="add" size={24} color="#fff" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }

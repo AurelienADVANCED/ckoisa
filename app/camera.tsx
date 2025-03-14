@@ -56,7 +56,6 @@ export default function App() {
       try {
         const photo = await cameraRef.current.takePictureAsync();
         await MediaLibrary.createAssetAsync(photo.uri);
-        console.log('Photo sauvegardée avec succès:', photo.uri);
       } catch (error) {
         console.log('Erreur lors de la prise ou de la sauvegarde de la photo :', error);
       }

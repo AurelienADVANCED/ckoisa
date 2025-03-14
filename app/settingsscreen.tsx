@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const [isProfilePublic, setIsProfilePublic] = useState<boolean>(true);
   const [isFriendsVisible, setIsFriendsVisible] = useState<boolean>(true);
@@ -23,7 +25,9 @@ export default function SettingsScreen() {
   };
 
   const saveSettings = () => {
-    
+    router.push({
+      pathname: '/loginscreen'
+    });
   };
 
   return (
