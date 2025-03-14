@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert, Image, ScrollView } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    SafeAreaView,
+    Alert,
+    Image,
+    ScrollView,
+    TextInput,
+} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import Toast from 'react-native-toast-message';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -12,6 +21,7 @@ export default function ChallengeScreen() {
     const [selectedGameMode, setSelectedGameMode] = useState<'floutee' | 'cachee'>('floutee');
     const [selectedSteps, setSelectedSteps] = useState<number>(1);
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+    const [objectToGuess, setObjectToGuess] = useState<string>('');
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { friendName, username, friendPhoto, userPhoto } = useLocalSearchParams();
@@ -33,14 +43,12 @@ export default function ChallengeScreen() {
             quality: 1,
         });
         if (result.cancelled) return null;
-        // Pour expo-image-picker v13 ou ultérieure, l'URI se trouve dans result.assets[0].uri
         return result.assets && result.assets.length > 0 ? result.assets[0].uri : null;
     };
 
-    // Upload du fichier via l'URL signée
+    // Upload du fichier via FileSystem.uploadAsync
     const uploadFile = async (signedUrl: string, fileUri: string) => {
         try {
-            // Utilise uploadAsync pour envoyer le fichier directement à l'URL signée
             const uploadResult = await FileSystem.uploadAsync(signedUrl, fileUri, {
                 httpMethod: "PUT",
                 headers: {
@@ -68,15 +76,16 @@ export default function ChallengeScreen() {
         const photoUri = await takePhoto();
         if (photoUri) {
             setCapturedPhoto(photoUri);
+            // On affiche simplement la photo, l'upload se fera via "Valider"
         }
     };
 
+    // Fonction de compression de l'image (optionnelle)
     const compressImage = async (uri: string) => {
         try {
-            // Compresse l'image à 50 % de qualité, en conservant le format JPEG
             const manipResult = await ImageManipulator.manipulateAsync(
                 uri,
-                [], // Pas d'actions de redimensionnement, on se contente de compresser
+                [], // aucune transformation (vous pouvez ajouter un resize si nécessaire)
                 { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
             );
             return manipResult.uri;
@@ -86,10 +95,14 @@ export default function ChallengeScreen() {
         }
     };
 
-    // Fonction "Valider" : upload de l'image sur Google Cloud Storage et navigation vers GameScreen
+    // Fonction "Valider" : compresse, upload l'image sur Google Cloud Storage et navigue vers GameScreen
     const handleValidateChallenge = async () => {
         if (!capturedPhoto) {
             Alert.alert("Erreur", "Aucune photo capturée.");
+            return;
+        }
+        if (!objectToGuess.trim()) {
+            Alert.alert("Erreur", "Veuillez définir l'objet à faire deviner.");
             return;
         }
         try {
@@ -102,24 +115,12 @@ export default function ChallengeScreen() {
                 body: JSON.stringify({ fileName }),
             });
             const data = await res.json();
-
             const signedUrl = data.url; // URL signée pour PUT
-
-            // Upload de l'image à l'URL signée
+            // Upload de l'image compressée
             await uploadFile(signedUrl, compressedUri);
-            // Construction de l'URL publique finale (supposée accessible)
+            // Construction de l'URL publique finale
             const finalImageUrl = `https://storage.googleapis.com/ckoisa/${fileName}`;
-            const message = `Défi envoyé à moi-même: ${username}\nMode: ${selectedGameMode.charAt(0).toUpperCase() + selectedGameMode.slice(1)}\nÉtapes: ${selectedSteps}`;
-            Toast.show({
-                type: 'success',
-                text1: 'Défi envoyé à moi-même',
-                text2: message,
-                visibilityTime: 3000,
-                autoHide: true,
-                topOffset: insets.top + 30,
-                bottomOffset: 80,
-            });
-            // Navigation vers GameScreen en passant l'URL publique de l'image et d'autres paramètres
+            // Navigation vers GameScreen en passant les paramètres, y compris la réponse correcte
             router.push({
                 pathname: '/gamescreen',
                 params: {
@@ -130,6 +131,7 @@ export default function ChallengeScreen() {
                     username,
                     friendPhoto: userPhoto,
                     userPhoto,
+                    correctAnswer: objectToGuess, // La réponse à faire deviner
                 },
             });
         } catch (error: any) {
@@ -191,6 +193,12 @@ export default function ChallengeScreen() {
                         <Image source={{ uri: capturedPhoto }} style={styles.capturedPhoto} />
                     </View>
                 )}
+                <TextInput
+                    style={styles.correctAnswerInput}
+                    placeholder="Définir l'objet à faire deviner"
+                    value={objectToGuess}
+                    onChangeText={setObjectToGuess}
+                />
                 <TouchableOpacity style={styles.sendSelfChallengeButton} onPress={handleSendSelfChallenge}>
                     <Text style={styles.sendChallengeButtonText}>Envoyer le défi à moi-même</Text>
                 </TouchableOpacity>
@@ -223,9 +231,20 @@ const styles = StyleSheet.create({
     stepsSection: { marginBottom: 30 },
     picker: { width: '100%', height: 50, backgroundColor: '#fff', borderRadius: 10, padding: 10 },
     pickerItem: { color: '#000' },
+    capturedPhotoContainer: { alignItems: 'center', marginBottom: 20 },
+    capturedPhoto: { width: 200, height: 200, borderRadius: 10, marginTop: 10 },
+    correctAnswerInput: {
+        width: '80%',
+        height: 50,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        marginBottom: 20,
+        backgroundColor: '#fff',
+        alignSelf: 'center',
+    },
     sendSelfChallengeButton: { backgroundColor: '#e91e63', paddingVertical: 15, borderRadius: 10, alignItems: 'center', marginBottom: 10 },
     validateButton: { backgroundColor: '#4caf50', paddingVertical: 15, borderRadius: 10, alignItems: 'center', marginBottom: 20 },
     sendChallengeButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-    capturedPhotoContainer: { alignItems: 'center', marginBottom: 20 },
-    capturedPhoto: { width: 200, height: 200, borderRadius: 10, marginTop: 10 },
 });
