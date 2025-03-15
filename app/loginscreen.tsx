@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { loginUser } from '../src/services/api';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState<string>('');
@@ -9,12 +10,18 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
       return;
     }
-    router.push('/profilescreen');
+    try {
+      const tokenData = await loginUser(email, password);
+      console.log('Token reçu:', tokenData);
+      router.push('/profilescreen');
+    } catch (error: any) {
+      Alert.alert('Erreur de connexion', error.message || 'Connexion échouée');
+    }
   };
 
   return (

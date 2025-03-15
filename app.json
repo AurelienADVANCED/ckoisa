@@ -51,9 +51,9 @@
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
           "savePhotosPermission": "Allow $(PRODUCT_NAME) to save photos."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
-
     "experiments": {
       "typedRoutes": true
     }

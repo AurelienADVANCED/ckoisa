@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-
+import { registerUser } from '../src/services/api'; 
 
 export default function RegisterScreen() {
   const [username, setUsername] = useState<string>('');
+  const [email, setEmail] = useState<string>(''); 
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const handleRegister = () => {
-    if (!username || !password || !confirmPassword) {
+  const handleRegister = async () => {
+    if (!username || !email || !password || !confirmPassword) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
       return;
     }
@@ -22,8 +23,13 @@ export default function RegisterScreen() {
       return;
     }
 
-    // Appel api
-    
+    try {
+      await registerUser(username, password, email);
+      Alert.alert('Succès', 'Utilisateur créé avec succès.');
+      router.push('/loginscreen');
+    } catch (error: any) {
+      Alert.alert('Erreur', error.message || 'Échec de l\'inscription');
+    }
   };
 
   return (
@@ -35,6 +41,14 @@ export default function RegisterScreen() {
           placeholder="Nom d'utilisateur"
           value={username}
           onChangeText={setUsername}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
         <TextInput
           style={styles.input}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { getToken } from '../../src/services/api'; 
 
 export default function ProfileScreen() {
   const [username, setUsername] = useState<string>('JohnDoe');
@@ -12,6 +13,15 @@ export default function ProfileScreen() {
 
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  const handleShowToken = async () => {
+    try {
+      const token = await getToken();
+      Alert.alert('Votre Token', token || 'Aucun token trouvé');
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de récupérer le token');
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
@@ -41,6 +51,9 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.settingsButton} onPress={() => router.push('/settingsscreen')}>
           <Text style={styles.settingsButtonText}>Paramètres de confidentialité</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.tokenButton} onPress={handleShowToken}>
+          <Text style={styles.tokenButtonText}>Afficher mon token</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -63,14 +76,6 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 3,
     borderColor: '#e91e63',
-  },
-  editButton: {
-    position: 'absolute',
-    bottom: -10,
-    right: -10,
-    backgroundColor: '#e91e63',
-    borderRadius: 15,
-    padding: 8,
   },
   username: {
     fontSize: 24,
@@ -108,6 +113,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   settingsButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  tokenButton: {
+    padding: 10,
+    backgroundColor: '#4caf50',
+    borderRadius: 5,
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  tokenButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
