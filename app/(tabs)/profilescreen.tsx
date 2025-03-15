@@ -1,46 +1,58 @@
-import React, { useState } from 'react';
+import React, { useContext, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { getToken } from '../../src/services/api'; 
+import { useRouter, useFocusEffect } from 'expo-router';
+import { AuthContext } from '../../src/contexts/AuthContext';
 
 export default function ProfileScreen() {
-  const [username, setUsername] = useState<string>('JohnDoe');
-  const [challengesSent, setChallengesSent] = useState<number>(10); 
-  const [successRate, setSuccessRate] = useState<number>(85); 
-  const [points, setPoints] = useState<number>(250); 
-  const [rank, setRank] = useState<number>(3); 
-
+  const { token, isAuthenticated, logout } = useContext(AuthContext);
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const handleShowToken = async () => {
-    try {
-      const token = await getToken();
-      Alert.alert('Votre Token', token || 'Aucun token trouvé');
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de récupérer le token');
-    }
-  };
+  // Utiliser useFocusEffect pour déclencher un rafraîchissement ou une vérification si besoin
+  useFocusEffect(
+    useCallback(() => {
+      console.log(isAuthenticated);
+      return;
+    }, [token])
+  );
 
+  // Si l'utilisateur n'est pas connecté ou que le token est invalide, afficher la vue "non connecté"
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+        <Text style={styles.username}>Vous n'êtes pas connecté ou votre session a expiré.</Text>
+        <View style={styles.settingsContainer}>
+          <TouchableOpacity style={styles.settingsButton} onPress={() => router.push('/loginscreen')}>
+            <Text style={styles.settingsButtonText}>Se connecter</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingsButton} onPress={() => router.push('/register')}>
+            <Text style={styles.settingsButtonText}>Créer un compte</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Affichage du profil si l'utilisateur est connecté
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-      <Text style={styles.username}>{username}</Text>
+      <Text style={styles.username}>JohnDoe</Text>
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{challengesSent}</Text>
+          <Text style={styles.statValue}>10</Text>
           <Text style={styles.statLabel}>Défis envoyés</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{successRate}%</Text>
+          <Text style={styles.statValue}>85%</Text>
           <Text style={styles.statLabel}>Taux de réussite</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{points}</Text>
+          <Text style={styles.statValue}>250</Text>
           <Text style={styles.statLabel}>Points</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>#{rank}</Text>
+          <Text style={styles.statValue}>#3</Text>
           <Text style={styles.statLabel}>Classement</Text>
         </View>
       </View>
@@ -51,8 +63,11 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.settingsButton} onPress={() => router.push('/settingsscreen')}>
           <Text style={styles.settingsButtonText}>Paramètres de confidentialité</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tokenButton} onPress={handleShowToken}>
+        <TouchableOpacity style={styles.tokenButton} onPress={() => Alert.alert('Votre Token', token || 'Aucun token trouvé')}>
           <Text style={styles.tokenButtonText}>Afficher mon token</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingsButton} onPress={logout}>
+          <Text style={styles.settingsButtonText}>Se déconnecter</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -64,18 +79,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-  },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: 20,
-    marginTop: 20,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: '#e91e63',
   },
   username: {
     fontSize: 24,

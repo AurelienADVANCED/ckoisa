@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { registerUser } from '../src/services/api'; 
+import { AuthContext } from '../src/contexts/AuthContext';
 
 export default function RegisterScreen() {
   const [username, setUsername] = useState<string>('');
@@ -12,6 +13,7 @@ export default function RegisterScreen() {
   
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { login } = useContext(AuthContext);
 
   const handleRegister = async () => {
     if (!username || !email || !password || !confirmPassword) {
@@ -24,9 +26,13 @@ export default function RegisterScreen() {
     }
 
     try {
+      // Créer l'utilisateur via l'API
       await registerUser(username, password, email);
-      Alert.alert('Succès', 'Utilisateur créé avec succès.');
-      router.push('/loginscreen');
+
+      // Se connecter automatiquement après l'inscription
+      await login(username, password);
+      Alert.alert('Succès', 'Utilisateur créé et connecté avec succès.');
+      router.push('/profilescreen');
     } catch (error: any) {
       Alert.alert('Erreur', error.message || 'Échec de l\'inscription');
     }

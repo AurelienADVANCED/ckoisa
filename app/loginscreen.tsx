@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { loginUser } from '../src/services/api';
+import { AuthContext } from '../src/contexts/AuthContext'; 
 
 export default function LoginScreen() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  
+  const { login } = useContext(AuthContext);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -16,8 +18,7 @@ export default function LoginScreen() {
       return;
     }
     try {
-      const tokenData = await loginUser(email, password);
-      console.log('Token reçu:', tokenData);
+      await login(email, password);
       router.push('/profilescreen');
     } catch (error: any) {
       Alert.alert('Erreur de connexion', error.message || 'Connexion échouée');
