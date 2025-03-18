@@ -1,27 +1,35 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  TouchableOpacity, 
+  SafeAreaView 
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { AuthContext } from '../src/contexts/AuthContext'; 
+import { AuthContext } from '../src/contexts/AuthContext';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  
   const { login } = useContext(AuthContext);
 
   const handleLogin = async () => {
+    setErrorMessage('');
     if (!email || !password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
+      setErrorMessage('Veuillez remplir tous les champs.');
       return;
     }
     try {
       await login(email, password);
       router.push('/profilescreen');
     } catch (error: any) {
-      Alert.alert('Erreur de connexion', error.message || 'Connexion échouée');
+      setErrorMessage(error.message || 'Connexion échouée');
     }
   };
 
@@ -45,6 +53,9 @@ export default function LoginScreen() {
           secureTextEntry
         />
       </View>
+      {errorMessage !== '' && (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      )}
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Se connecter</Text>
       </TouchableOpacity>
@@ -102,5 +113,11 @@ const styles = StyleSheet.create({
   registerLinkText: {
     color: '#e91e63',
     fontSize: 16,
+  },
+  errorText: {
+    color: '#ff0000',
+    fontSize: 16,
+    marginBottom: 10,
+    textAlign: 'center',
   },
 });

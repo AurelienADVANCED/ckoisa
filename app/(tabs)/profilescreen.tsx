@@ -108,6 +108,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     marginVertical: 20,
+    alignSelf: 'center', // Centrage de l'image
   },
   placeholderAvatar: {
     width: 120,
@@ -117,6 +118,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginVertical: 20,
+    alignSelf: 'center', // Centrage de l'image placeholder
   },
   placeholderText: {
     color: '#fff',
@@ -127,7 +129,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 20,
-    textAlign: 'center', // Centrage du pseudo
+    textAlign: 'center',
   },
   statsContainer: {
     flexDirection: 'row',
