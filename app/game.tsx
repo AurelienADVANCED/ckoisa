@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -25,7 +25,6 @@ export default function ChallengeScreen() {
     const [objectToGuess, setObjectToGuess] = useState<string>('');
     const insets = useSafeAreaInsets();
     const router = useRouter();
-    const { friendName, username, friendPhoto, userPhoto } = useLocalSearchParams();
     const API_BASE_URL_SERVER = Constants.expoConfig?.extra?.API_BASE_URL_SERVER || 'http://192.168.144.61:3000';
 
     const gamemodes = [
@@ -33,7 +32,7 @@ export default function ChallengeScreen() {
         { label: 'Cachée', value: 'cachee' },
     ];
 
-    // Lance la caméra et récupère l'URI de la photo capturée.
+    // Lance la caméra pour prendre une photo
     const takePhoto = async () => {
         const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
         if (!permissionResult.granted) {
@@ -44,7 +43,7 @@ export default function ChallengeScreen() {
             allowsEditing: false,
             quality: 1,
         });
-        if (result.cancelled) return null;
+        if (result.canceled) return null;
         return result.assets && result.assets.length > 0 ? result.assets[0].uri : null;
     };
 
@@ -73,12 +72,11 @@ export default function ChallengeScreen() {
         return `photos/${Date.now()}_challenge.jpg`;
     };
 
-    // Capture la photo et affiche l'aperçu (pour le défi à soi-même)
-    const handleSendSelfChallenge = async () => {
+    // Capture la photo et affiche l'aperçu
+    const handleTakePhoto = async () => {
         const photoUri = await takePhoto();
         if (photoUri) {
             setCapturedPhoto(photoUri);
-            // On affiche simplement la photo, l'upload se fera via "Valider"
         }
     };
 
@@ -87,7 +85,7 @@ export default function ChallengeScreen() {
         try {
             const manipResult = await ImageManipulator.manipulateAsync(
                 uri,
-                [], // aucune transformation (vous pouvez ajouter un resize si nécessaire)
+                [],
                 { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
             );
             return manipResult.uri;
@@ -97,7 +95,7 @@ export default function ChallengeScreen() {
         }
     };
 
-    // Fonction "Valider" : compresse, upload l'image sur Google Cloud Storage et navigue vers GameScreen
+    // Fonction "Valider" pour lancer le défi
     const handleValidateChallenge = async () => {
         if (!capturedPhoto) {
             Alert.alert("Erreur", "Aucune photo capturée.");
@@ -110,30 +108,23 @@ export default function ChallengeScreen() {
         try {
             const compressedUri = await compressImage(capturedPhoto);
             const fileName = generateFileName();
-            // Appel au backend pour obtenir une URL signée pour l'upload
             const res = await fetch(`${API_BASE_URL_SERVER}/generate-signed-url`, {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({ fileName }),
             });
             const data = await res.json();
-            const signedUrl = data.url; // URL signée pour PUT
-            // Upload de l'image compressée
+            const signedUrl = data.url;
             await uploadFile(signedUrl, compressedUri);
-            // Construction de l'URL publique finale
             const finalImageUrl = `https://storage.googleapis.com/ckoisa/${fileName}`;
-            // Navigation vers GameScreen en passant les paramètres, y compris la réponse correcte
+            // Navigation vers l'écran de jeu en passant les paramètres
             router.push({
                 pathname: '/gamescreen',
                 params: {
                     challengeImage: finalImageUrl,
                     gameMode: selectedGameMode,
                     totalSteps: selectedSteps.toString(),
-                    friendName: username, // Pour défi à soi-même
-                    username,
-                    friendPhoto: userPhoto,
-                    userPhoto,
-                    correctAnswer: objectToGuess, // La réponse à faire deviner
+                    correctAnswer: objectToGuess,
                 },
             });
         } catch (error: any) {
@@ -144,21 +135,10 @@ export default function ChallengeScreen() {
     return (
         <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <View style={styles.header}>
-                    <Text style={styles.title}>Défi pour {friendName}</Text>
-                    <View style={styles.avatarSection}>
-                        <View style={styles.avatarContainer}>
-                            <Image style={styles.avatar} source={{ uri: userPhoto }} />
-                            <Text style={styles.usernameLabel}>Toi</Text>
-                            <Text style={styles.username}>Par {username}</Text>
-                        </View>
-                        <View style={styles.avatarContainer}>
-                            <Image style={styles.avatar} source={{ uri: friendPhoto }} />
-                            <Text style={styles.usernameLabel}>Ami</Text>
-                            <Text style={styles.username}>{friendName}</Text>
-                        </View>
-                    </View>
-                </View>
+                <Text style={styles.headerTitle}>Défi Photo</Text>
+                <Text style={styles.headerDescription}>
+                    Prenez une photo d'un objet et passez votre téléphone pour que votre ami devine ce que c'est.
+                </Text>
                 <View style={styles.gameModeSection}>
                     <Text style={styles.sectionTitle}>Choisir le mode de jeu</Text>
                     <View style={styles.gameModeContainer}>
@@ -169,7 +149,7 @@ export default function ChallengeScreen() {
                                     styles.gameModeButton,
                                     selectedGameMode === mode.value && styles.selectedGameModeButton,
                                 ]}
-                                onPress={() => setSelectedGameMode(mode.value)}
+                                onPress={() => setSelectedGameMode(mode.value as "floutee" | "cachee")}
                             >
                                 <Text style={styles.gameModeButtonText}>{mode.label}</Text>
                             </TouchableOpacity>
@@ -187,7 +167,6 @@ export default function ChallengeScreen() {
                         {Array.from({ length: 8 }, (_, i) => i + 1).map(step => (
                             <Picker.Item key={step} label={`${step}`} value={`${step}`} />
                         ))}
-
                     </Picker>
                 </View>
                 {capturedPhoto && (
@@ -202,12 +181,12 @@ export default function ChallengeScreen() {
                     value={objectToGuess}
                     onChangeText={setObjectToGuess}
                 />
-                <TouchableOpacity style={styles.sendSelfChallengeButton} onPress={handleSendSelfChallenge}>
-                    <Text style={styles.sendChallengeButtonText}>Envoyer le défi à moi-même</Text>
+                <TouchableOpacity style={styles.takePhotoButton} onPress={handleTakePhoto}>
+                    <Text style={styles.takePhotoButtonText}>Prendre une photo</Text>
                 </TouchableOpacity>
                 {capturedPhoto && (
                     <TouchableOpacity style={styles.validateButton} onPress={handleValidateChallenge}>
-                        <Text style={styles.sendChallengeButtonText}>Valider</Text>
+                        <Text style={styles.validateButtonText}>Lancer</Text>
                     </TouchableOpacity>
                 )}
             </ScrollView>
@@ -218,15 +197,10 @@ export default function ChallengeScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f5f5f5' },
     scrollContainer: { padding: 20, paddingBottom: 40 },
-    header: { alignItems: 'center', marginBottom: 30 },
-    title: { fontSize: 28, fontWeight: 'bold', color: '#333', marginBottom: 10 },
-    avatarSection: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', width: '100%' },
-    avatarContainer: { alignItems: 'center' },
-    avatar: { width: 80, height: 80, borderRadius: 40, borderWidth: 2, borderColor: '#ccc', marginBottom: 5 },
-    usernameLabel: { fontSize: 16, color: '#666' },
-    username: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-    sectionTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 10 },
+    headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 10 },
+    headerDescription: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 20 },
     gameModeSection: { marginBottom: 30 },
+    sectionTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 10, textAlign: 'center' },
     gameModeContainer: { flexDirection: 'row', justifyContent: 'space-around' },
     gameModeButton: { backgroundColor: '#e0e0e0', borderRadius: 15, paddingVertical: 10, paddingHorizontal: 20, alignItems: 'center' },
     selectedGameModeButton: { backgroundColor: '#e91e63' },
@@ -247,7 +221,32 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         alignSelf: 'center',
     },
-    sendSelfChallengeButton: { backgroundColor: '#e91e63', paddingVertical: 15, borderRadius: 10, alignItems: 'center', marginBottom: 10 },
-    validateButton: { backgroundColor: '#4caf50', paddingVertical: 15, borderRadius: 10, alignItems: 'center', marginBottom: 20 },
-    sendChallengeButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+    takePhotoButton: {
+        backgroundColor: '#e91e63',
+        paddingVertical: 15,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginBottom: 10,
+        width: '80%',
+        alignSelf: 'center',
+    },
+    takePhotoButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    validateButton: {
+        backgroundColor: '#4caf50',
+        paddingVertical: 15,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginBottom: 20,
+        width: '80%',
+        alignSelf: 'center',
+    },
+    validateButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
 });
