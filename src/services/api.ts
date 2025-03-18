@@ -92,6 +92,35 @@ async function createUserBDD(keycloakUuid: string, pseudo: string, authToken: st
 }
 
 /**
+ * Crée les settings par défaut pour un utilisateur.
+ * On suppose ici que les settings par défaut sont :
+ *  - profilPublic: true,
+ *  - amisVisibles: true,
+ *  - defisVisibles: true.
+ */
+export async function createSettings(token: string) {
+  const defaultSettings = {
+    profilPublic: true,
+    amisVisibles: true,
+    defisVisibles: true
+  };
+
+  const response = await apiFetch(`${API_BASE_URL_API}/settings`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(defaultSettings)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erreur lors de la création des settings: ${response.status}`);
+  }
+  return response.json();
+}
+
+/**
  * Crée un nouvel utilisateur dans Keycloak via l'Admin REST API.
  * Nécessite d'obtenir un token admin via le client "admin-cli".
  * Arguments: username, password, email.
@@ -160,6 +189,9 @@ export async function registerUser(username: string, password: string, email: st
       throw new Error('Impossible de récupérer le sub (UUID) dans le token');
     }
     await createUserBDD(sub, username, accessToken);
+
+    // Créer les settings par défaut pour cet utilisateur
+    await createSettings(accessToken);
 
     return tokenData;
   } catch (error) {
