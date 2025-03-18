@@ -80,7 +80,7 @@ async function createUserBDD(keycloakUuid: string, pseudo: string, authToken: st
       defisPerdus: 0,
       points: 0,
       pseudo,
-      avatar: 'https://example.com/avatar.jpg'
+      avatar: 'https://cdn-icons-png.flaticon.com/512/4792/4792944.png'
     }),
   });
 
