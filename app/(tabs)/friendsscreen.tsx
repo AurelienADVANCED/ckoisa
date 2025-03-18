@@ -19,6 +19,7 @@ interface Friend {
   id: string;
   name: string;
   photo: string;
+  uuid: string;
 }
 
 export default function FriendsScreen() {
@@ -27,7 +28,6 @@ export default function FriendsScreen() {
   const { token } = useContext(AuthContext);
 
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'online' | 'offline'>('all');
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -37,12 +37,12 @@ export default function FriendsScreen() {
       }
       try {
         const friendsData = await getMyFriends(token);
-        console.log(friendsData);
         
         const uiFriends: Friend[] = friendsData.map((f: any) => ({
           id: f.id.toString(),      
           name: f.pseudo,
           photo: f.avatar, 
+          uuid: f.friendId
         }));
         setFriends(uiFriends);
       } catch (error) {
@@ -62,12 +62,14 @@ export default function FriendsScreen() {
 
   // Navigation pour envoyer un défi
   const sendChallenge = (friend: Friend) => {
+    console.log(friend),
     router.push({
       pathname: '/challengescreen',
       params: {
         friendId: friend.id,
         friendName: friend.name,
         friendPhoto: friend.photo,
+        friendUUID: friend.uuid
       },
     });
   };
