@@ -5,8 +5,7 @@ import {
   StyleSheet, 
   Switch, 
   TouchableOpacity, 
-  SafeAreaView, 
-  Alert 
+  SafeAreaView 
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,19 +17,19 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { token } = useContext(AuthContext);
 
-  // État local pour stocker les settings
   const [settings, setSettings] = useState({
     profilPublic: true,
     amisVisibles: true,
     defisVisibles: true,
   });
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
 
   // Récupération des settings via l'API
   useEffect(() => {
     const fetchSettings = async () => {
       if (!token) {
-        Alert.alert("Erreur", "Vous devez être connecté pour récupérer vos paramètres.");
+        setError("Vous devez être connecté pour récupérer vos paramètres.");
         setLoading(false);
         return;
       }
@@ -45,9 +44,9 @@ export default function SettingsScreen() {
             defisVisibles: s.defisVisibles,
           });
         }
-      } catch (error: any) {
-        console.error("Erreur lors de la récupération des settings :", error);
-        Alert.alert("Erreur", "Impossible de récupérer vos paramètres.");
+      } catch (err: any) {
+        console.error("Erreur lors de la récupération des settings :", err);
+        setError("Impossible de récupérer vos paramètres.");
       } finally {
         setLoading(false);
       }
@@ -73,17 +72,16 @@ export default function SettingsScreen() {
     if (!token) return;
     try {
       const updatedSettings = await updateMySettings(token, settings);
-      Alert.alert("Succès", "Paramètres enregistrés.");
-      // Vous pouvez mettre à jour l'état avec la réponse si nécessaire
+      // On peut mettre à jour l'état avec la réponse si besoin
       setSettings({
         profilPublic: updatedSettings.profilPublic,
         amisVisibles: updatedSettings.amisVisibles,
         defisVisibles: updatedSettings.defisVisibles,
       });
-      // Optionnel : rediriger ou effectuer une autre action
-      router.push('/');
-    } catch (error: any) {
-      Alert.alert("Erreur", error.message || "Erreur lors de la mise à jour des paramètres.");
+      // On peut rediriger ou afficher un message de succès (ici on affiche simplement dans l'UI)
+      setError("Paramètres enregistrés avec succès.");
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de la mise à jour des paramètres.");
     }
   };
 
@@ -98,6 +96,9 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <Text style={styles.title}>Paramètres de confidentialité</Text>
+      {error !== '' && (
+        <Text style={styles.errorText}>{error}</Text>
+      )}
       <View style={styles.settingItem}>
         <Text style={styles.settingLabel}>Profil public</Text>
         <Switch
@@ -179,5 +180,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#e91e63',
     textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ff0000',
+    textAlign: 'center',
+    marginBottom: 15,
   },
 });
