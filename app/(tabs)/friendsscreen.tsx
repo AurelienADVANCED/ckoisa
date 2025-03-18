@@ -38,7 +38,6 @@ export default function FriendsScreen() {
     }
     try {
       const friendsData = await getMyFriends(token);
-      console.log("Données reçues de l'API :", friendsData);
       const uiFriends: Friend[] = friendsData.map((f: any) => ({
         id: f.id.toString(),
         name: f.pseudo,

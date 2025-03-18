@@ -39,7 +39,6 @@ export default function GamesListScreen() {
     }
     try {
       const myGames = await getMyGames(token);
-      console.log("Données reçues de l'API :", myGames);
       if (Array.isArray(myGames)) {
         setGames(myGames);
       } else {
@@ -67,7 +66,6 @@ export default function GamesListScreen() {
       await deleteGame(token!, game.id);
       Alert.alert("Succès", "Le jeu a été lancé.");
       setGames(prev => prev.filter(g => g.id !== game.id));
-      console.log(game);
       router.push({
         pathname: '/gamescreen',
         params: {
