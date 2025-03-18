@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AuthContext } from '../../src/contexts/AuthContext';
@@ -11,24 +11,21 @@ export default function ProfileScreen() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-        <Text style={styles.username}>Vous n'êtes pas connecté ou votre session a expiré.</Text>
-        <View style={styles.settingsContainer}>
-          <TouchableOpacity style={styles.settingsButton} onPress={() => router.push('/loginscreen')}>
-            <Text style={styles.settingsButtonText}>Se connecter</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.settingsButton} onPress={() => router.push('/register')}>
-            <Text style={styles.settingsButtonText}>Créer un compte</Text>
-          </TouchableOpacity>
-        </View>
+      <SafeAreaView style={[styles.container, styles.centerContent, { paddingTop: insets.top }]}>
+        <Text style={styles.notConnectedText}>
+          Vous devez être connecté pour accéder à votre profil.
+        </Text>
+        <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/loginscreen')}>
+          <Text style={styles.loginButtonText}>Se connecter</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   if (isAuthenticated && !userInfo) {
     return (
-      <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-        <Text>Chargement des informations...</Text>
+      <SafeAreaView style={[styles.container, styles.centerContent, { paddingTop: insets.top }]}>
+        <Text style={styles.loadingText}>Chargement des informations...</Text>
       </SafeAreaView>
     );
   }
@@ -77,19 +74,45 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
     paddingHorizontal: 20,
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notConnectedText: {
+    fontSize: 20,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  loginButton: {
+    backgroundColor: '#e91e63',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  loadingText: {
+    fontSize: 20,
+    color: '#e91e63',
+    textAlign: 'center',
+  },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     marginVertical: 20,
   },
   placeholderAvatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: '#ccc',
     justifyContent: 'center',
     alignItems: 'center',
@@ -97,31 +120,32 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
   },
   username: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#333',
+    marginBottom: 20,
+    textAlign: 'center', // Centrage du pseudo
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
     width: '100%',
-    marginTop: 20,
+    marginVertical: 20,
   },
   statItem: {
     alignItems: 'center',
-    flex: 1,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#e91e63',
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#666',
   },
   settingsContainer: {
@@ -129,15 +153,15 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   settingsButton: {
-    padding: 10,
+    padding: 12,
     backgroundColor: '#e91e63',
-    borderRadius: 5,
+    borderRadius: 8,
     marginBottom: 15,
     alignItems: 'center',
   },
   settingsButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });

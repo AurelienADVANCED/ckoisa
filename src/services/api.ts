@@ -364,3 +364,18 @@ export async function createGame(
   }
   return response.json();
 }
+
+export async function deleteGame(token: string, gameId: number) {
+  const response = await apiFetch(`${API_BASE_URL_API}/games/${gameId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erreur lors de la suppression du jeu: ${response.status}`);
+  }
+  return response.text();
+}

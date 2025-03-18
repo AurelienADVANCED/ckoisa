@@ -26,7 +26,7 @@ export default function ChallengeScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { friendName, username, friendPhoto, userPhoto } = useLocalSearchParams();
-    const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL || 'http://192.168.1.21:8080';
+    const API_BASE_URL_SERVER = Constants.expoConfig?.extra?.API_BASE_URL_SERVER || 'http://192.168.144.61:3000';
 
     const gamemodes = [
         { label: 'Floutée', value: 'floutee' },
@@ -111,7 +111,7 @@ export default function ChallengeScreen() {
             const compressedUri = await compressImage(capturedPhoto);
             const fileName = generateFileName();
             // Appel au backend pour obtenir une URL signée pour l'upload
-            const res = await fetch('http://192.168.144.61:3000/generate-signed-url', {
+            const res = await fetch(`${API_BASE_URL_SERVER}/generate-signed-url`, {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({ fileName }),

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -10,9 +10,9 @@ import {
   Alert 
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { AuthContext } from '../../src/contexts/AuthContext';
-import { getMyGames } from '@/src/services/api';
+import { getMyGames, deleteGame } from '@/src/services/api';
 
 interface Game {
   id: number;
@@ -31,47 +31,73 @@ export default function GamesListScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchGames = async () => {
-      if (!token) {
-        Alert.alert("Erreur", "Token introuvable");
-        setLoading(false);
-        return;
-      }
-      try {
-        const myGames = await getMyGames(token);
-        console.log("Données reçues de l'API :", myGames);
-        if (Array.isArray(myGames)) {
-          setGames(myGames);
-        } else {
-          console.error("Erreur : getMyGames ne retourne pas un tableau !");
-          setGames([]);
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des jeux :", error);
-        Alert.alert("Erreur", "Impossible de récupérer vos jeux.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (isAuthenticated) {
-      fetchGames();
+  const fetchGames = async () => {
+    if (!token) {
+      setLoading(false);
+      return;
     }
-  }, [isAuthenticated, token]);
+    try {
+      const myGames = await getMyGames(token);
+      console.log("Données reçues de l'API :", myGames);
+      if (Array.isArray(myGames)) {
+        setGames(myGames);
+      } else {
+        console.error("Erreur : getMyGames ne retourne pas un tableau !");
+        setGames([]);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des jeux :", error);
+      Alert.alert("Erreur", "Impossible de récupérer vos jeux.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Fonction pour lancer le jeu
-  const handleLaunchGame = (game: Game) => {
-    router.push({
-      pathname: '/gamescreen',
-      params: { gameId: game.id.toString() },
-    });
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchGames();
+    }, [token])
+  );
+
+  // Handler pour "lancer" le jeu : supprime le jeu de la BDD, puis navigue vers /gamescreen
+  const handleLaunchGame = async (game: Game) => {
+    try {
+      await deleteGame(token!, game.id);
+      Alert.alert("Succès", "Le jeu a été lancé.");
+      setGames(prev => prev.filter(g => g.id !== game.id));
+      router.push({
+        pathname: '/gamescreen',
+        params: {
+          gameId: game.id.toString(),
+          challengeImage: game.urlImage,
+          gameMode: game.gameMode,
+          totalSteps: game.etape.toString(),
+          status: game.status,
+        },
+      });
+    } catch (error: any) {
+      console.error("Erreur lors du lancement du jeu :", error);
+      Alert.alert("Erreur", error.message || "Une erreur est survenue lors du lancement du jeu.");
+    }
   };
 
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color="#e91e63" />
+      </SafeAreaView>
+    );
+  }
+
+  // Si le token n'est pas défini, l'utilisateur n'est pas connecté
+  if (!token) {
+    return (
+      <SafeAreaView style={[styles.container, styles.notConnectedContainer, { paddingTop: insets.top }]}>
+        <Text style={styles.notConnectedText}>Vous n'êtes pas connecté. Veuillez vous connecter.</Text>
+        <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/loginscreen')}>
+          <Text style={styles.loginButtonText}>Se connecter</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
@@ -114,12 +140,35 @@ export default function GamesListScreen() {
   );
 }
 
+const API_BASE_URL_API = 'http://192.168.144.61:8082';
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0', // Fond légèrement gris pour le contraste
+    backgroundColor: '#f0f0f0', // Fond gris clair
     alignItems: 'center',
     paddingHorizontal: 20,
+  },
+  notConnectedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notConnectedText: {
+    fontSize: 18,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  loginButton: {
+    backgroundColor: '#e91e63',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
   title: {
     fontSize: 28,
@@ -130,7 +179,7 @@ const styles = StyleSheet.create({
   },
   noGamesText: {
     fontSize: 18,
-    color: '#333', // Texte foncé
+    color: '#333', // Texte sombre
     marginTop: 20,
     textAlign: 'center',
   },
