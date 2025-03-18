@@ -1,7 +1,18 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  Image, 
+  ActivityIndicator, 
+  Alert 
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { getScoreboard } from '@/src/services/api';
 
 interface Player {
   id: string;
@@ -10,34 +21,47 @@ interface Player {
   photo: string;
 }
 
-export default function scoreboard() {
+export default function ScoreboardScreen() {
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  // State pour stocker les joueurs avec leurs scores
-  const [players, setPlayers] = useState<Player[]>([
-    { id: '1', name: 'Alice', score: 9500, photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-    { id: '2', name: 'Bob', score: 7800, photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-    { id: '3', name: 'Charlie', score: 8400, photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-    { id: '4', name: 'David', score: 9200, photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-  ]);
+  const fetchScoreboard = async () => {
+    try {
+      const data = await getScoreboard();
+      const mappedPlayers: Player[] = data.map((p: any) => ({
+        id: p.id.toString(),
+        name: p.pseudo,
+        score: p.points,
+        photo: p.avatar,
+      }));
+      // Tri par score décroissant
+      mappedPlayers.sort((a, b) => b.score - a.score);
+      setPlayers(mappedPlayers);
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération du scoreboard:", error);
+      Alert.alert("Erreur", "Impossible de récupérer le scoreboard.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Trier les joueurs par score décroissant
-  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  useEffect(() => {
+    fetchScoreboard();
+  }, []);
 
-  // Navigateur vers la page principale
   const goBack = () => {
     router.push('/');
   };
 
-  // Rend le composant pour un élément de la liste (joueur)
-  const renderItem = ({ item }: { item: Player }) => (
-    <View style={styles.playerItem}>
-      <Image style={styles.avatar} source={{ uri: item.photo }} />
-      <Text style={styles.playerName}>{item.name}</Text>
-      <Text style={styles.playerScore}>{item.score} pts</Text>
-    </View>
-  );
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+        <ActivityIndicator size="large" color="#e91e63" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
@@ -48,9 +72,15 @@ export default function scoreboard() {
         <Text style={styles.title}>Classement</Text>
       </View>
       <FlatList
-        data={sortedPlayers}
+        data={players}
         keyExtractor={(item) => item.id}
-        renderItem={renderItem}
+        renderItem={({ item }) => (
+          <View style={styles.playerItem}>
+            <Image style={styles.avatar} source={{ uri: item.photo }} />
+            <Text style={styles.playerName}>{item.name}</Text>
+            <Text style={styles.playerScore}>{item.score} pts</Text>
+          </View>
+        )}
         style={styles.playerList}
       />
     </SafeAreaView>
@@ -62,10 +92,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 20,
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
     marginBottom: 20,
   },
   backButton: {
@@ -80,6 +112,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
+    flex: 1,
+    textAlign: 'center',
   },
   playerItem: {
     flexDirection: 'row',
@@ -88,6 +122,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    width: '100%',
   },
   avatar: {
     width: 50,
@@ -105,5 +140,6 @@ const styles = StyleSheet.create({
   },
   playerList: {
     flex: 1,
+    width: '100%',
   },
 });

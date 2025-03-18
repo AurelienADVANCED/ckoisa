@@ -379,3 +379,20 @@ export async function deleteGame(token: string, gameId: number) {
   }
   return response.text();
 }
+
+/**
+ * Récupère le scoreboard (liste des joueurs triés par points décroissants).
+ */
+export async function getScoreboard() {
+  const response = await fetch(`${API_BASE_URL_API}/scoreboard`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erreur lors de la récupération du scoreboard: ${response.status}`);
+  }
+  return response.json();
+}
