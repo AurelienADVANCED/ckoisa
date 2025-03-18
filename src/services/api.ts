@@ -428,3 +428,38 @@ export async function getScoreboard() {
   }
   return response.json();
 }
+
+/**
+ * Récupère les settings associés à l'utilisateur connecté.
+ */
+export async function getMySettings(token: string) {
+  const response = await apiFetch(`${API_BASE_URL_API}/settings/my`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Erreur lors de la récupération des settings: ${response.status}`);
+  }
+  return response.json();
+}
+
+/**
+ * Met à jour les settings de l'utilisateur connecté.
+ */
+export async function updateMySettings(token: string, settings: { profilPublic: boolean; amisVisibles: boolean; defisVisibles: boolean; }) {
+  const response = await apiFetch(`${API_BASE_URL_API}/settings/me`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(settings),
+  });
+  if (!response.ok) {
+    throw new Error(`Erreur lors de la mise à jour des settings: ${response.status}`);
+  }
+  return response.json();
+}
