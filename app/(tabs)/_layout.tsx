@@ -44,6 +44,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="gamesscreen"
+        options={{
+          title: 'Games',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="gamepad-variant-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profilescreen"
         options={{
           title: 'Mon Profil',

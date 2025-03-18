@@ -241,7 +241,7 @@ export async function refreshToken() {
 } 
 
 export async function getPlayerInfo(token: string) {
-  const response = await apiFetch(`${API_BASE_URL_API}/playerinfo/my`, {
+  const response = await apiFetch(`${API_BASE_URL_API}/playerinfo/me`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -304,7 +304,7 @@ export async function addFriend(token: string, UUID: string) {
 }
 
 export async function getMyFriends(token: string) {
-  const response = await apiFetch(`${API_BASE_URL_API}/friends/my`, {
+  const response = await apiFetch(`${API_BASE_URL_API}/friends/me`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -316,5 +316,51 @@ export async function getMyFriends(token: string) {
     throw new Error(`Erreur lors de la récupération des informations: ${response.status}`);
   }
 
+  return response.json();
+}
+
+export async function getMyGames(token: string) {
+  const response = await apiFetch(`${API_BASE_URL_API}/games/me`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erreur lors de la récupération des informations: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function createGame(
+  token: string,
+  UUIDTarget: string,
+  urlImage: string,
+  gameMode: string,
+  etape: number
+) {
+  const payload = {
+    playerIdTarget: UUIDTarget,
+    urlImage,
+    gameMode,
+    etape,
+    status: "created"
+  };
+
+  const response = await apiFetch(`${API_BASE_URL_API}/games`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erreur lors de la création du défi: ${response.status}`);
+  }
   return response.json();
 }
