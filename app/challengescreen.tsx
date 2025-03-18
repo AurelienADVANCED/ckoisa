@@ -123,46 +123,6 @@ export default function ChallengeScreen() {
         return response.json();
     };
 
-    // Handler pour envoyer le défi à soi-même
-    const handleSendSelfChallenge = async () => {
-        if (!capturedPhoto) {
-            Alert.alert("Erreur", "Aucune photo capturée.");
-            return;
-        }
-        if (!objectToGuess.trim()) {
-            Alert.alert("Erreur", "Veuillez définir l'objet à faire deviner.");
-            return;
-        }
-        try {
-            const compressedUri = await compressImage(capturedPhoto);
-            const fileName = generateFileName();
-            // Obtenir l'URL signée pour l'upload
-            const res = await fetch(`${API_BASE_URL_SERVER}/generate-signed-url`, {
-                method: 'POST',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ fileName }),
-            });
-            const data = await res.json();
-            const signedUrl = data.url;
-            await uploadFile(signedUrl, compressedUri);
-            const finalImageUrl = `https://storage.googleapis.com/ckoisa/${fileName}`;
-            // Pour un défi à soi-même, le target est le joueur actuel
-            const game = await createGame(userInfo?.id || "", finalImageUrl);
-            router.push({
-                pathname: '/gamescreen',
-                params: {
-                    gameId: game.id,
-                    challengeImage: finalImageUrl,
-                    gameMode: selectedGameMode,
-                    totalSteps: selectedSteps.toString(),
-                    correctAnswer: objectToGuess,
-                },
-            });
-        } catch (error: any) {
-            Alert.alert('Erreur', error.message || "L’upload a échoué");
-        }
-    };
-
     // Envoi du défi à un ami
     const handleSendFriendChallenge = async () => {
         if (!capturedPhoto) {
@@ -271,9 +231,6 @@ export default function ChallengeScreen() {
                     </View>
                 )}
                 <View style={styles.buttonsContainer}>
-                    <TouchableOpacity style={styles.challengeButton} onPress={handleSendSelfChallenge}>
-                        <Text style={styles.challengeButtonText}>Envoyer le défi à moi-même</Text>
-                    </TouchableOpacity>
                     {friendId && (
                         <TouchableOpacity style={styles.challengeButton} onPress={handleSendFriendChallenge}>
                             <Text style={styles.challengeButtonText}>Envoyer le défi à mon ami</Text>
