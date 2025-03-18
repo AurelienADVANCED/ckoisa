@@ -22,6 +22,7 @@ interface Game {
   urlImage: string;
   gameMode: string;
   etape: number;
+  correctionAnswers: number;
 }
 
 export default function GamesListScreen() {
@@ -66,14 +67,14 @@ export default function GamesListScreen() {
       await deleteGame(token!, game.id);
       Alert.alert("Succès", "Le jeu a été lancé.");
       setGames(prev => prev.filter(g => g.id !== game.id));
+      console.log(game);
       router.push({
         pathname: '/gamescreen',
         params: {
-          gameId: game.id.toString(),
           challengeImage: game.urlImage,
           gameMode: game.gameMode,
           totalSteps: game.etape.toString(),
-          status: game.status,
+          correctAnswer: game.correctionAnswers
         },
       });
     } catch (error: any) {

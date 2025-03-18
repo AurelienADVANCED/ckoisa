@@ -101,10 +101,11 @@ export default function ChallengeScreen() {
         const gamePayload = {
             playerId: userInfo?.id, // l'ID du joueur actuel
             playerIdTarget: targetId,
-            status: "created",
+            status: "En attente",
             urlImage: imageUrl,
             gameMode: selectedGameMode,
             etape: selectedSteps,
+            correctionAnswers: objectToGuess,
         };
 
         const response = await fetch(`${API_BASE_URL_API}/games`, {

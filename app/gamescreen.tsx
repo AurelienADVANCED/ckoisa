@@ -13,17 +13,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-
-interface LocalSearchParams {
-  gameMode: 'floutee' | 'cachee';
-  totalSteps: string;
-  challengeImage?: string;
-  correctAnswer?: string;
-}
+import { LocalSearchParams } from '@/src/types/LocalSearchParams';
 
 export default function GameScreen() {
   const insets = useSafeAreaInsets();
-  const { gameMode, totalSteps, challengeImage, correctAnswer } = useLocalSearchParams<LocalSearchParams>();
+  const localParams = useLocalSearchParams() as unknown as LocalSearchParams;
+  const { gameMode, totalSteps, challengeImage, correctAnswer } = localParams;
+
   const router = useRouter();
   const stepsCount = parseInt(totalSteps) || 3;
   const maxMistakes = 3;
