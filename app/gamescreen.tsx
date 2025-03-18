@@ -1,59 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  Image,
-  TextInput,
   Alert,
-  Dimensions,
+  Image,
   ScrollView,
+  TextInput,
+  Dimensions,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
+import Constants from 'expo-constants';
+import { AuthContext } from '../src/contexts/AuthContext';
+import { updatePlayerStats } from '@/src/services/api';
 import { LocalSearchParams } from '@/src/types/LocalSearchParams';
 
 export default function GameScreen() {
   const insets = useSafeAreaInsets();
   const localParams = useLocalSearchParams() as unknown as LocalSearchParams;
   const { gameMode, totalSteps, challengeImage, correctAnswer } = localParams;
-
   const router = useRouter();
+
   const stepsCount = parseInt(totalSteps) || 3;
   const maxMistakes = 3;
 
   // États du jeu
+  const [statsUpdated, setStatsUpdated] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [guess, setGuess] = useState<string>('');
   const [mistakeCount, setMistakeCount] = useState<number>(0);
   const [hasWon, setHasWon] = useState<boolean>(false);
   const [hasLost, setHasLost] = useState<boolean>(false);
-  const [loseReason, setLoseReason] = useState<string>(''); // "tooManyMistakes" ou "imageRevealed"
+  const [loseReason, setLoseReason] = useState<string>('');
 
   // Image et réponse par défaut
   const imageUrl = challengeImage || 'https://via.placeholder.com/300';
   const answer = correctAnswer || 'objet';
 
-  // Calcul du flou (mode floutée)
-  const initialBlur = 20;
+  // Calcul du flou pour le mode "floutee" (plus violent)
+  const initialBlur = 40;
   const blurRadius = gameMode === 'floutee' ? (initialBlur * (stepsCount - currentStep)) / stepsCount : 0;
 
-  // Calcul des segments masqués (mode caché)
+  // Calcul des segments masqués pour le mode "cachee"
   const imageWidth = Dimensions.get('window').width - 40;
   const imageHeight = imageWidth;
   const maskSegments = [];
-  for (let i = currentStep; i < stepsCount; i++) {
+  for (let i = currentStep + 1; i < stepsCount; i++) {
     maskSegments.push(i);
   }
+
+  // États du context
+  const { token, userInfo, refreshUserInfo } = useContext(AuthContext);
 
   // Passe à l'étape suivante
   const handleNextStep = () => {
     if (currentStep < stepsCount - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Image complètement révélée : condition de défaite (perte par révélation)
       setHasLost(true);
       setLoseReason('imageRevealed');
     }
@@ -74,6 +84,32 @@ export default function GameScreen() {
       }
     }
   };
+
+  // Exemple dans votre useEffect de GameScreen
+  useEffect(() => {
+    if ((hasWon || hasLost) && token && userInfo && !statsUpdated) {
+      const updateStats = async () => {
+        try {
+          const updatedPlayerInfo = { ...userInfo, defisEnvoyes: userInfo.defisEnvoyes + 1 };
+          if (hasWon) {
+            updatedPlayerInfo.defisGagnes = userInfo.defisGagnes + 1;
+            updatedPlayerInfo.points = userInfo.points + 100;
+          } else {
+            updatedPlayerInfo.defisPerdus = userInfo.defisPerdus + 1;
+            updatedPlayerInfo.points = userInfo.points - 100;
+          }
+          await updatePlayerStats(token, updatedPlayerInfo);
+          // Rafraîchir le context après la mise à jour
+          await refreshUserInfo();
+          setStatsUpdated(true);
+        } catch (err) {
+          console.error("Erreur lors de la mise à jour des stats:", err);
+        }
+      };
+      updateStats();
+    }
+  }, [hasWon, hasLost, token, userInfo, statsUpdated, refreshUserInfo]);
+
 
   // Vue de victoire
   if (hasWon) {
@@ -165,22 +201,106 @@ export default function GameScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  scrollContainer: { padding: 20, paddingBottom: 40 },
-  title: { fontSize: 26, fontWeight: 'bold', marginBottom: 20, color: '#333', textAlign: 'center' },
-  imageContainer: { position: 'relative', marginBottom: 20, alignItems: 'center' },
-  challengeImage: { borderRadius: 10 },
-  stepCounter: { fontSize: 18, marginBottom: 5, color: '#333', textAlign: 'center' },
-  mistakeCounter: { fontSize: 18, marginBottom: 20, color: '#d32f2f', textAlign: 'center' },
-  controls: { width: '100%', alignItems: 'center' },
-  nextStepButton: { backgroundColor: '#e91e63', padding: 15, borderRadius: 10, marginBottom: 20, width: '80%', alignItems: 'center' },
-  nextStepButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  guessInput: { width: '80%', height: 50, borderColor: '#ccc', borderWidth: 1, borderRadius: 10, paddingHorizontal: 15, marginBottom: 20, backgroundColor: '#fff' },
-  submitGuessButton: { backgroundColor: '#4caf50', padding: 15, borderRadius: 10, width: '80%', alignItems: 'center' },
-  submitGuessButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  endGameContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  endGameTitle: { fontSize: 32, fontWeight: 'bold', marginBottom: 20 },
-  endGameText: { fontSize: 20, color: '#333', marginBottom: 40, textAlign: 'center' },
-  homeButton: { backgroundColor: '#e91e63', padding: 15, borderRadius: 10 },
-  homeButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5'
+  },
+  scrollContainer: {
+    padding: 20,
+    paddingBottom: 40
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+    textAlign: 'center'
+  },
+  imageContainer: {
+    position: 'relative',
+    marginBottom: 20,
+    alignItems: 'center'
+  },
+  challengeImage: {
+    borderRadius: 10
+  },
+  stepCounter: {
+    fontSize: 18,
+    marginBottom: 5,
+    color: '#333',
+    textAlign: 'center'
+  },
+  mistakeCounter: {
+    fontSize: 18,
+    marginBottom: 20,
+    color: '#d32f2f',
+    textAlign: 'center'
+  },
+  controls: {
+    width: '100%',
+    alignItems: 'center'
+  },
+  nextStepButton: {
+    backgroundColor: '#e91e63',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    width: '80%',
+    alignItems: 'center'
+  },
+  nextStepButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold'
+  },
+  guessInput: {
+    width: '80%',
+    height: 50,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    alignSelf: 'center'
+  },
+  submitGuessButton: {
+    backgroundColor: '#4caf50',
+    padding: 15,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center'
+  },
+  submitGuessButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold'
+  },
+  endGameContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20
+  },
+  endGameTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 20
+  },
+  endGameText: {
+    fontSize: 20,
+    color: '#333',
+    marginBottom: 40,
+    textAlign: 'center'
+  },
+  homeButton: {
+    backgroundColor: '#e91e63',
+    padding: 15,
+    borderRadius: 10
+  },
+  homeButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold'
+  },
 });

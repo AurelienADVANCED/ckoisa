@@ -463,3 +463,18 @@ export async function updateMySettings(token: string, settings: { profilPublic: 
   }
   return response.json();
 }
+
+export async function updatePlayerStats(token: string, updatedPlayerInfo: any) {
+  const response = await apiFetch(`${API_BASE_URL_API}/playerinfo/${updatedPlayerInfo.id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(updatedPlayerInfo),
+  });
+  if (!response.ok) {
+    throw new Error(`Erreur lors de la mise à jour des stats: ${response.status}`);
+  }
+  return response.json();
+}

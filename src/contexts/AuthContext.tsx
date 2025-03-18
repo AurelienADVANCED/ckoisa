@@ -2,13 +2,8 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { loginUser, refreshToken, getPlayerInfo } from '../services/api';
-import Constants from 'expo-constants';
 import { jwtDecode } from 'jwt-decode';
-import { apiFetch } from '../services/apiClient';
 import { UserInfo } from '../types/UserInfo';
-
-const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL || 'http://192.168.1.20:8080';
-const API_BASE_URL_API = Constants.expoConfig?.extra?.API_BASE_URL_API || 'http://192.168.1.21:8082';
 
 function getUserIdFromToken(token: string): string | null {
   try {
@@ -28,6 +23,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+  refreshUserInfo: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -35,9 +31,10 @@ export const AuthContext = createContext<AuthContextType>({
   userId: null,
   userInfo: null,
   isAuthenticated: false,
-  login: async () => { },
-  logout: async () => { },
-  refresh: async () => { },
+  login: async () => {},
+  logout: async () => {},
+  refresh: async () => {},
+  refreshUserInfo: async () => {},
 });
 
 interface AuthProviderProps {
@@ -61,13 +58,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     })();
   }, []);
 
+  // Rafraîchir les infos utilisateur quand le token ou userId change
   useEffect(() => {
     const fetchUserData = async () => {
       if (!token || !userId) {
         setUserInfo(null);
         return;
       }
-
       try {
         const data: UserInfo = await getPlayerInfo(token);
         setUserInfo(data);
@@ -79,22 +76,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     fetchUserData();
   }, [token, userId]);
 
-  // Fonction de connexion : appelle Keycloak (ou votre serveur) et sauvegarde le token
+  // Fonction de mise à jour manuelle des infos utilisateur
+  const refreshUserInfo = async () => {
+    if (!token || !userId) return;
+    try {
+      const data: UserInfo = await getPlayerInfo(token);
+      setUserInfo(data);
+    } catch (error) {
+      console.error('Erreur lors du rafraîchissement des infos utilisateur:', error);
+    }
+  };
+
+  // Fonction de connexion : appelle loginUser et sauvegarde le token
   const login = async (username: string, password: string) => {
     try {
-      // 1) Appel à Keycloak ou votre backend pour récupérer tokenData
       const tokenData = await loginUser(username, password);
-
-      // 2) Stocker le access_token
       setToken(tokenData.access_token);
       await SecureStore.setItemAsync('userToken', tokenData.access_token);
-
-      // 3) Stocker le refresh_token
       await SecureStore.setItemAsync('userRefreshToken', tokenData.refresh_token, {
         keychainAccessible: SecureStore.ALWAYS,
       });
-
-      // 4) Extraire sub (UUID) et l’enregistrer
       const sub = getUserIdFromToken(tokenData.access_token);
       setUserId(sub);
     } catch (error) {
@@ -118,10 +119,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const tokenData = await refreshToken();
       setToken(tokenData.access_token);
       await SecureStore.setItemAsync('userToken', tokenData.access_token);
-
       const sub = getUserIdFromToken(tokenData.access_token);
       setUserId(sub);
-
     } catch (error) {
       console.error('Erreur lors du rafraîchissement du token :', error);
       throw error;
@@ -136,6 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     refresh,
+    refreshUserInfo,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
