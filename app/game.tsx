@@ -16,6 +16,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
+import Constants from 'expo-constants';
 
 export default function ChallengeScreen() {
     const [selectedGameMode, setSelectedGameMode] = useState<'floutee' | 'cachee'>('floutee');
@@ -25,6 +26,7 @@ export default function ChallengeScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { friendName, username, friendPhoto, userPhoto } = useLocalSearchParams();
+    const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL || 'http://192.168.1.21:8080';
 
     const gamemodes = [
         { label: 'Floutée', value: 'floutee' },
@@ -109,7 +111,7 @@ export default function ChallengeScreen() {
             const compressedUri = await compressImage(capturedPhoto);
             const fileName = generateFileName();
             // Appel au backend pour obtenir une URL signée pour l'upload
-            const res = await fetch('http://192.168.1.20:3000/generate-signed-url', {
+            const res = await fetch('http://192.168.144.61:3000/generate-signed-url', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({ fileName }),
@@ -177,14 +179,15 @@ export default function ChallengeScreen() {
                 <View style={styles.stepsSection}>
                     <Text style={styles.sectionTitle}>Choisir le nombre d'étapes</Text>
                     <Picker
-                        selectedValue={selectedSteps}
-                        onValueChange={(itemValue) => setSelectedSteps(itemValue)}
+                        selectedValue={`${selectedSteps}`}
+                        onValueChange={(val) => setSelectedSteps(parseInt(val, 10))}
                         style={styles.picker}
                         itemStyle={styles.pickerItem}
                     >
                         {Array.from({ length: 8 }, (_, i) => i + 1).map(step => (
-                            <Picker.Item key={step} label={`${step}`} value={step} />
+                            <Picker.Item key={step} label={`${step}`} value={`${step}`} />
                         ))}
+
                     </Picker>
                 </View>
                 {capturedPhoto && (

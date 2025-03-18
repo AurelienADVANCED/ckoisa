@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert, Image } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
+import { AuthContext } from '../src/contexts/AuthContext'; 
 
 export default function ChallengeScreen() {
     const [selectedGameMode, setSelectedGameMode] = useState<'floutee' | 'cachee'>('floutee');
     const [selectedSteps, setSelectedSteps] = useState<number>(1);
     const insets = useSafeAreaInsets();
-    const { friendName, username, friendPhoto, userPhoto } = useLocalSearchParams();
+    const { friendName, friendPhoto } = useLocalSearchParams();
+    const { token, isAuthenticated, logout, userInfo } = useContext(AuthContext);
 
     const gamemodes = [
         { label: 'Floutée', value: 'floutee' },
@@ -35,9 +37,9 @@ export default function ChallengeScreen() {
                 <Text style={styles.title}>Défi pour {friendName}</Text>
                 <View style={styles.avatarSection}>
                     <View style={styles.avatarContainer}>
-                        <Image style={styles.avatar} source={{ uri: userPhoto }} />
+                        <Image style={styles.avatar} source={{ uri: userInfo?.avatar }} />
                         <Text style={styles.usernameLabel}>Toi</Text>
-                        <Text style={styles.username}>Par {username}</Text>
+                        <Text style={styles.username}>Par {userInfo?.pseudo}</Text>
                     </View>
                     <View style={styles.avatarContainer}>
                         <Image style={styles.avatar} source={{ uri: friendPhoto }} />
@@ -66,13 +68,13 @@ export default function ChallengeScreen() {
             <View style={styles.stepsSection}>
                 <Text style={styles.sectionTitle}>Choisir le nombre d'étapes</Text>
                 <Picker
-                    selectedValue={selectedSteps}
-                    onValueChange={(itemValue) => setSelectedSteps(itemValue)}
+                    selectedValue={String(selectedSteps)}
+                    onValueChange={(value) => setSelectedSteps(parseInt(value, 10))}
                     style={styles.picker}
                     itemStyle={styles.pickerItem}
                 >
                     {Array.from({ length: 8 }, (_, i) => i + 1).map(step => (
-                        <Picker.Item key={step} label={`${step}`} value={step} />
+                        <Picker.Item key={step} label={`${step}`} value={`${step}`} />
                     ))}
                 </Picker>
             </View>

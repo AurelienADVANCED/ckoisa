@@ -1,36 +1,66 @@
 // FriendsScreen.js
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, SafeAreaView, Image } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  Image 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { getMyFriends } from '@/src/services/api';
+import { AuthContext } from '../../src/contexts/AuthContext';
 
 interface Friend {
   id: string;
   name: string;
-  status: 'online' | 'offline';
   photo: string;
 }
 
 export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { token } = useContext(AuthContext);
 
-  const [friends, setFriends] = useState<Friend[]>([
-    { id: '1', name: 'Alice', status: 'online', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-    { id: '2', name: 'Bob', status: 'offline', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-    { id: '3', name: 'Charlie', status: 'online', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-    { id: '4', name: 'David', status: 'offline', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-  ]);
-
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'online' | 'offline'>('all');
 
+  useEffect(() => {
+    const fetchFriends = async () => {
+      if (!token) {
+        console.error("Token non défini");
+        return;
+      }
+      try {
+        const friendsData = await getMyFriends(token);
+        console.log(friendsData);
+        
+        const uiFriends: Friend[] = friendsData.map((f: any) => ({
+          id: f.id.toString(),      
+          name: f.pseudo,
+          photo: f.avatar, 
+        }));
+        setFriends(uiFriends);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des amis :', error);
+      }
+    };
+  
+    fetchFriends();
+  }, [token]);
+
+  // Navigation pour ajouter un ami
   const addFriend = () => {
     router.push({
       pathname: '/addfriendscreen',
     });
   };
 
+  // Navigation pour envoyer un défi
   const sendChallenge = (friend: Friend) => {
     router.push({
       pathname: '/challengescreen',
@@ -38,38 +68,16 @@ export default function FriendsScreen() {
         friendId: friend.id,
         friendName: friend.name,
         friendPhoto: friend.photo,
-        username: 'JohnDoe',
-        userPhoto: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg', 
       },
     });
   };
 
-  const filterFriends = (filter: 'all' | 'online' | 'offline'): Friend[] => {
-    switch (filter) {
-      case 'online':
-        return friends.filter(friend => friend.status === 'online');
-      case 'offline':
-        return friends.filter(friend => friend.status === 'offline');
-      default:
-        return friends;
-    }
-  };
-
+  // Rendu d'un item dans la FlatList
   const renderItem = ({ item }: { item: Friend }) => (
     <View style={styles.friendItem}>
       <Image style={styles.avatar} source={{ uri: item.photo }} />
       <View style={styles.infoContainer}>
         <Text style={styles.friendName}>{item.name}</Text>
-        <View style={styles.friendStatus}>
-          <Ionicons
-            name={item.status === 'online' ? 'person' : 'person-outline'}
-            size={16}
-            color={item.status === 'online' ? 'green' : 'gray'}
-          />
-          <Text style={styles.statusText}>
-            {item.status === 'online' ? 'En ligne' : 'Hors ligne'}
-          </Text>
-        </View>
       </View>
       <TouchableOpacity onPress={() => sendChallenge(item)} style={styles.sendChallengeButton}>
         <Text style={styles.sendChallengeButtonText}>Défier</Text>
@@ -79,29 +87,8 @@ export default function FriendsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-      
-      <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[styles.filterButton, selectedFilter === 'all' && styles.selectedFilterButton]}
-          onPress={() => setSelectedFilter('all')}
-        >
-          <Text style={styles.filterButtonText}>Tous</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterButton, selectedFilter === 'online' && styles.selectedFilterButton]}
-          onPress={() => setSelectedFilter('online')}
-        >
-          <Text style={styles.filterButtonText}>En ligne</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterButton, selectedFilter === 'offline' && styles.selectedFilterButton]}
-          onPress={() => setSelectedFilter('offline')}
-        >
-          <Text style={styles.filterButtonText}>Hors ligne</Text>
-        </TouchableOpacity>
-      </View>
       <FlatList
-        data={filterFriends(selectedFilter)}
+        data={friends}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         style={styles.friendList}
@@ -119,7 +106,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 20,
-    paddingTop: 20,
   },
   addButton: {
     position: 'absolute',
@@ -157,7 +143,6 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    width: '100%',
   },
   avatar: {
     width: 50,

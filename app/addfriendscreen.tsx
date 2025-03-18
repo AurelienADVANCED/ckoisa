@@ -1,65 +1,148 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, SafeAreaView, Image, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  FlatList,
+  TouchableOpacity,
+  SafeAreaView,
+  Image,
+  Alert,
+  ActivityIndicator
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-
-interface User {
-  id: string;
-  name: string;
-  photo: string;
-}
+import { getPlayerByPseudo, addFriend, getToken, getMyFriends, getUserIdFromToken } from '@/src/services/api';
+import { FriendRelation } from '@/src/types/FriendRelation';
+import { UserInfo } from '@/src/types/UserInfo';
 
 export default function AddFriendsScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
-
-  // Liste simulée d'utilisateurs disponibles
-  const [users, setUsers] = useState<User[]>([
-    { id: '1', name: 'Alice', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-    { id: '2', name: 'Bob', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-    { id: '3', name: 'Charlie', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-    { id: '4', name: 'David', photo: 'https://images.squarespace-cdn.com/content/v1/607f89e638219e13eee71b1e/1684821560422-SD5V37BAG28BURTLIXUQ/michael-sum-LEpfefQf4rU-unsplash.jpg' },
-  ]);
-
   const [searchText, setSearchText] = useState<string>('');
+  const [users, setUsers] = useState<UserInfo[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [friends, setFriends] = useState<string[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Filtrer la liste des utilisateurs en fonction du texte de recherche
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // Charger la liste des amis et l'ID utilisateur actuel
+  useEffect(() => {
+    const fetchFriendsAndUser = async () => {
+      try {
+        const token = await getToken();
+        if (!token) throw new Error("Token utilisateur introuvable");
 
-  const addFriend = (user: User) => {
-    // Ici, vous pouvez appeler votre API pour ajouter un ami
-    Alert.alert('Ami ajouté', `${user.name} a été ajouté à vos amis !`);
+        const friendRelations: FriendRelation[] = await getMyFriends(token);
+        const friendIds = friendRelations.map(friend => friend.friendId);
+        setFriends(friendIds);
+
+        const userId = await getUserIdFromToken(token);
+        setCurrentUserId(userId);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des amis et de l'ID utilisateur :", error);
+      }
+    };
+
+    fetchFriendsAndUser();
+  }, []);
+
+  // Fonction pour rechercher un joueur par pseudo
+  const handleSearch = async () => {
+    if (!searchText.trim()) {
+      Alert.alert("Erreur", "Veuillez entrer un pseudo pour rechercher un joueur.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Token utilisateur introuvable");
+
+      const fetchedUsers = await getPlayerByPseudo(token, searchText);
+      setUsers(Array.isArray(fetchedUsers) ? fetchedUsers : [fetchedUsers]);
+    } catch (error) {
+      console.error("Erreur lors de la recherche :", error);
+      Alert.alert("Erreur", "Aucun joueur trouvé.");
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const renderItem = ({ item }: { item: User }) => (
-    <View style={styles.userItem}>
-      <Image style={styles.avatar} source={{ uri: item.photo }} />
-      <Text style={styles.userName}>{item.name}</Text>
-      <TouchableOpacity style={styles.addButton} onPress={() => addFriend(item)}>
-        <Ionicons name="add-circle" size={24} color="#fff" />
-        <Text style={styles.addButtonText}>Ajouter</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  // Fonction pour ajouter un ami
+  const handleAddFriend = async (user: UserInfo) => {
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Token utilisateur introuvable");
+
+      await addFriend(token, user.id);
+      Alert.alert("Succès", `${user.pseudo} a été ajouté à votre liste d'amis !`);
+
+      // Mettre à jour la liste des amis pour désactiver le bouton
+      setFriends([...friends, user.id]);
+    } catch (error) {
+      console.error("Erreur lors de l'ajout d'ami :", error);
+      Alert.alert("Erreur", "Impossible d'ajouter cet utilisateur.");
+    }
+  };
+
+  // Vérifie si l'utilisateur est déjà un ami
+  const isAlreadyFriend = (userId: string) => friends.includes(userId);
+
+  // Affichage de chaque utilisateur dans la liste
+  const renderItem = ({ item }: { item: UserInfo }) => {
+    const alreadyFriend = isAlreadyFriend(item.id);
+    const isCurrentUser = item.id === currentUserId;
+
+    return (
+      <View style={styles.userItem}>
+        <Image style={styles.avatar} source={{ uri: item.avatar }} />
+        <Text style={styles.userName}>{item.pseudo}</Text>
+        <TouchableOpacity
+          style={[styles.addButton, (alreadyFriend || isCurrentUser) && styles.disabledButton]}
+          onPress={() => !alreadyFriend && !isCurrentUser && handleAddFriend(item)}
+          disabled={alreadyFriend || isCurrentUser}
+        >
+          {isCurrentUser ? (
+            <Text style={styles.addButtonText}>Vous</Text>
+          ) : alreadyFriend ? (
+            <Text style={styles.addButtonText}>Ajouté</Text>
+          ) : (
+            <>
+              <Ionicons name="add-circle" size={24} color="#fff" />
+              <Text style={styles.addButtonText}>Ajouter</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <Text style={styles.title}>Ajouter des amis</Text>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Rechercher un utilisateur"
-        value={searchText}
-        onChangeText={setSearchText}
-      />
-      <FlatList
-        data={filteredUsers}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
-      />
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Entrez un pseudo..."
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+          <Ionicons name="search" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#e91e63" style={{ marginTop: 20 }} />
+      ) : (
+        <FlatList
+          data={users}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContainer}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -77,14 +160,27 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   searchInput: {
+    flex: 1,
     height: 50,
     borderColor: '#e91e63',
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 15,
-    marginBottom: 20,
     fontSize: 16,
+  },
+  searchButton: {
+    backgroundColor: '#e91e63',
+    padding: 10,
+    borderRadius: 5,
+    marginLeft: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listContainer: {
     paddingBottom: 20,
@@ -122,5 +218,8 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  disabledButton: {
+    backgroundColor: '#aaa',
   },
 });

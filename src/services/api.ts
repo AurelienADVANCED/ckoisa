@@ -1,7 +1,24 @@
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
+import { jwtDecode } from 'jwt-decode';
+import { apiFetch } from './apiClient';
 
-const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL || 'http://192.168.1.21:8080';
+const API_BASE_URL_KEYCLOAK = Constants.expoConfig?.extra?.API_BASE_URL || 'http://192.168.1.21:8080';
+const API_BASE_URL_API = Constants.expoConfig?.extra?.API_BASE_URL_API || 'http://192.168.1.21:8082';
+
+/**
+ * Décoder le token pour extraire 'sub' (UUID Keycloak).
+ */
+export function getUserIdFromToken(token: string): string | null {
+  try {
+    const decoded: any = jwtDecode(token);
+    return decoded?.sub || null;
+  } catch (err) {
+    console.error('Erreur décodage token:', err);
+    return null;
+  }
+}
+
 
 /**
  * Enregistre l'access token dans SecureStore.
@@ -49,6 +66,31 @@ export async function getRefreshToken() {
   }
 }
 
+async function createUserBDD(keycloakUuid: string, pseudo: string, authToken: string) {
+  const response = await fetch(API_BASE_URL_API + '/playerinfo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`,
+    },
+    body: JSON.stringify({
+      id: keycloakUuid,
+      defisEnvoyes: 0,
+      defisGagnes: 0,
+      defisPerdus: 0,
+      points: 0,
+      pseudo,
+      avatar: 'https://example.com/avatar.jpg'
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Echec de la création de l'utilisateur local: ${errorText}`);
+  }
+  return await response.json();
+}
+
 /**
  * Crée un nouvel utilisateur dans Keycloak via l'Admin REST API.
  * Nécessite d'obtenir un token admin via le client "admin-cli".
@@ -58,7 +100,7 @@ export async function registerUser(username: string, password: string, email: st
   try {
     // Obtenir un token admin depuis le realm master
     const adminTokenResponse = await fetch(
-      `${API_BASE_URL}/realms/master/protocol/openid-connect/token`,
+      `${API_BASE_URL_KEYCLOAK}/realms/master/protocol/openid-connect/token`,
       {
         method: 'POST',
         headers: {
@@ -81,7 +123,7 @@ export async function registerUser(username: string, password: string, email: st
     const adminToken = adminTokenData.access_token;
 
     // Créer l'utilisateur via l'Admin REST API
-    const response = await fetch(`${API_BASE_URL}/admin/realms/CKoisaKeycloak/users`, {
+    const response = await fetch(`${API_BASE_URL_KEYCLOAK}/admin/realms/CKoisaKeycloak/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -107,8 +149,18 @@ export async function registerUser(username: string, password: string, email: st
       const errorData = await response.json();
       throw new Error(errorData.errorMessage || 'Échec de la création de l\'utilisateur');
     }
-    // Optionnel: Après création, connecte directement l'utilisateur pour obtenir ses tokens.
+
+    // 3) Se connecter pour récupérer un token (et donc le champ 'sub')
     const tokenData = await loginUser(username, password);
+    const accessToken = tokenData.access_token;
+
+    // 4) Extraire l'UUID (sub) puis créer l’utilisateur dans la base locale
+    const sub = getUserIdFromToken(accessToken);
+    if (!sub) {
+      throw new Error('Impossible de récupérer le sub (UUID) dans le token');
+    }
+    await createUserBDD(sub, username, accessToken);
+
     return tokenData;
   } catch (error) {
     throw error;
@@ -128,7 +180,7 @@ export async function loginUser(username: string, password: string) {
     formData.append('username', username);
     formData.append('password', password);
 
-    const response = await fetch(`${API_BASE_URL}/realms/CKoisaKeycloak/protocol/openid-connect/token`, {
+    const response = await fetch(`${API_BASE_URL_KEYCLOAK}/realms/CKoisaKeycloak/protocol/openid-connect/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -146,6 +198,7 @@ export async function loginUser(username: string, password: string) {
     const refreshToken = tokenData.refresh_token;
     await saveToken(accessToken);
     await saveRefreshToken(refreshToken);
+
     return tokenData;
   } catch (error) {
     throw error;
@@ -166,7 +219,7 @@ export async function refreshToken() {
     formData.append('client_id', 'ckoisa-client');
     formData.append('refresh_token', storedRefreshToken);
 
-    const response = await fetch(`${API_BASE_URL}/realms/CKoisaKeycloak/protocol/openid-connect/token`, {
+    const response = await fetch(`${API_BASE_URL_KEYCLOAK}/realms/CKoisaKeycloak/protocol/openid-connect/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -185,4 +238,83 @@ export async function refreshToken() {
   } catch (error) {
     throw error;
   }
+} 
+
+export async function getPlayerInfo(token: string) {
+  const response = await apiFetch(`${API_BASE_URL_API}/playerinfo/my`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erreur lors de la récupération des informations: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function getPlayerByPseudo(token: string, pseudo: string) {
+  const response = await apiFetch(`${API_BASE_URL_API}/playerinfo/pseudo/${pseudo}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erreur lors de la récupération des informations: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function addFriend(token: string, UUID: string) {
+  try {
+    // Récupérer la liste actuelle d'amis via getMyFriends
+    const friendsList = await getMyFriends(token);
+
+    // Vérifier si l'utilisateur est déjà dans la liste des amis
+    const alreadyFriend = friendsList.some((friend: { friendId: string }) => friend.friendId === UUID);
+    if (alreadyFriend) {
+      throw new Error("Cet utilisateur est déjà dans votre liste d'amis.");
+    }
+
+    // Ajouter l'ami
+    const addResponse = await apiFetch(`${API_BASE_URL_API}/friends/${UUID}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!addResponse.ok) {
+      throw new Error(`Erreur lors de l'ajout de l'ami: ${addResponse.status}`);
+    }
+
+    return await addResponse.json();
+  } catch (error) {
+    console.error("Erreur dans addFriend:", error);
+    throw error;
+  }
+}
+
+export async function getMyFriends(token: string) {
+  const response = await apiFetch(`${API_BASE_URL_API}/friends/my`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erreur lors de la récupération des informations: ${response.status}`);
+  }
+
+  return response.json();
 }
