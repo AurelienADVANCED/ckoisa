@@ -42,11 +42,9 @@ export default function GamesListScreen() {
       if (Array.isArray(myGames)) {
         setGames(myGames);
       } else {
-        console.error("Erreur : getMyGames ne retourne pas un tableau !");
         setGames([]);
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération des jeux :", error);
       Alert.alert("Erreur", "Impossible de récupérer vos jeux.");
     } finally {
       setLoading(false);
@@ -64,7 +62,6 @@ export default function GamesListScreen() {
   const handleLaunchGame = async (game: Game) => {
     try {
       await deleteGame(token!, game.id);
-      Alert.alert("Succès", "Le jeu a été lancé.");
       setGames(prev => prev.filter(g => g.id !== game.id));
       router.push({
         pathname: '/gamescreen',
@@ -76,7 +73,6 @@ export default function GamesListScreen() {
         },
       });
     } catch (error: any) {
-      console.error("Erreur lors du lancement du jeu :", error);
       Alert.alert("Erreur", error.message || "Une erreur est survenue lors du lancement du jeu.");
     }
   };

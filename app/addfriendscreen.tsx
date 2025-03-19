@@ -39,7 +39,6 @@ export default function AddFriendsScreen() {
         const userId = await getUserIdFromToken(token);
         setCurrentUserId(userId);
       } catch (error) {
-        console.error("Erreur lors de la récupération des amis et de l'ID utilisateur :", error);
       }
     };
 
@@ -61,7 +60,6 @@ export default function AddFriendsScreen() {
       const fetchedUsers = await getPlayerByPseudo(token, searchText);
       setUsers(Array.isArray(fetchedUsers) ? fetchedUsers : [fetchedUsers]);
     } catch (error) {
-      console.error("Erreur lors de la recherche :", error);
       Alert.alert("Erreur", "Aucun joueur trouvé.");
       setUsers([]);
     } finally {
@@ -81,7 +79,6 @@ export default function AddFriendsScreen() {
       // Mettre à jour la liste des amis pour désactiver le bouton
       setFriends([...friends, user.id]);
     } catch (error) {
-      console.error("Erreur lors de l'ajout d'ami :", error);
       Alert.alert("Erreur", "Impossible d'ajouter cet utilisateur.");
     }
   };

@@ -21,7 +21,6 @@ export async function verifyTokenWithKeycloak(token: string): Promise<boolean> {
     // Si la réponse est OK, le token est valide
     return response.ok;
   } catch (error) {
-    console.error("Erreur lors de la vérification du token:", error);
     return false;
   }
 }

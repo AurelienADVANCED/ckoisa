@@ -10,7 +10,6 @@ function getUserIdFromToken(token: string): string | null {
     const decoded: any = jwtDecode(token);
     return decoded?.sub || null;
   } catch (err) {
-    console.error('Erreur décodage token:', err);
     return null;
   }
 }
@@ -69,7 +68,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const data: UserInfo = await getPlayerInfo(token);
         setUserInfo(data);
       } catch (error) {
-        console.error('Erreur lors de la récupération des informations utilisateur:', error);
       }
     };
 
@@ -83,7 +81,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data: UserInfo = await getPlayerInfo(token);
       setUserInfo(data);
     } catch (error) {
-      console.error('Erreur lors du rafraîchissement des infos utilisateur:', error);
     }
   };
 
@@ -99,7 +96,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const sub = getUserIdFromToken(tokenData.access_token);
       setUserId(sub);
     } catch (error) {
-      console.error('Erreur lors du login :', error);
       throw error;
     }
   };
@@ -122,7 +118,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const sub = getUserIdFromToken(tokenData.access_token);
       setUserId(sub);
     } catch (error) {
-      console.error('Erreur lors du rafraîchissement du token :', error);
       throw error;
     }
   };

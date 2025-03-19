@@ -58,9 +58,9 @@
       "typedRoutes": true
     },
     "extra": {
-      "API_BASE_URL": "http://192.168.1.21:8080",
-      "API_BASE_URL_API": "http://192.168.1.21:8082",
-      "API_BASE_URL_SERVER": "http://192.168.1.21:3000"
+      "API_BASE_URL": "http://192.168.144.61:8080",
+      "API_BASE_URL_API": "http://192.168.144.61:8082",
+      "API_BASE_URL_SERVER": "http://192.168.144.61:3000"
     }
   }
 }

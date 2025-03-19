@@ -71,7 +71,6 @@ export default function ChallengeScreen() {
             }
             return uploadResult;
         } catch (err) {
-            console.error("Exception during upload:", err);
             throw err;
         }
     };
@@ -91,7 +90,6 @@ export default function ChallengeScreen() {
             );
             return manipResult.uri;
         } catch (error) {
-            console.error("Erreur lors de la compression:", error);
             throw error;
         }
     };

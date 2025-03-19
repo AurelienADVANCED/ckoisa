@@ -10,6 +10,7 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   if (!isAuthenticated) {
+
     return (
       <SafeAreaView style={[styles.container, styles.centerContent, { paddingTop: insets.top }]}>
         <Text style={styles.notConnectedText}>

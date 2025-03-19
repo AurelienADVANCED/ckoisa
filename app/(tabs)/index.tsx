@@ -1,8 +1,8 @@
-// index.js
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import logo from '../../constants/logo.png';
 
 export default function App() {
   const insets = useSafeAreaInsets();
@@ -11,6 +11,7 @@ export default function App() {
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
+        <Image source={logo} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>Menu Principal</Text>
       </View>
       <View style={styles.buttonContainer}>
@@ -35,6 +36,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
     marginTop: 20,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 10,
   },
   title: {
     fontSize: 32,

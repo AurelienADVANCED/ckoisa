@@ -14,7 +14,6 @@ export function getUserIdFromToken(token: string): string | null {
     const decoded: any = jwtDecode(token);
     return decoded?.sub || null;
   } catch (err) {
-    console.error('Erreur décodage token:', err);
     return null;
   }
 }
@@ -27,7 +26,6 @@ export async function saveToken(token: string) {
   try {
     await SecureStore.setItemAsync('userToken', token, { keychainAccessible: SecureStore.ALWAYS });
   } catch (error) {
-    console.error("Erreur lors de la sauvegarde du token", error);
   }
 }
 
@@ -38,7 +36,6 @@ export async function getToken() {
   try {
     return await SecureStore.getItemAsync('userToken');
   } catch (error) {
-    console.error("Erreur lors de la récupération du token", error);
     return null;
   }
 }
@@ -50,7 +47,6 @@ export async function saveRefreshToken(refreshToken: string) {
   try {
     await SecureStore.setItemAsync('userRefreshToken', refreshToken, { keychainAccessible: SecureStore.ALWAYS });
   } catch (error) {
-    console.error("Erreur lors de la sauvegarde du refresh token", error);
   }
 }
 
@@ -61,7 +57,6 @@ export async function getRefreshToken() {
   try {
     return await SecureStore.getItemAsync('userRefreshToken');
   } catch (error) {
-    console.error("Erreur lors de la récupération du refresh token", error);
     return null;
   }
 }
@@ -330,7 +325,6 @@ export async function addFriend(token: string, UUID: string) {
 
     return await addResponse.json();
   } catch (error) {
-    console.error("Erreur dans addFriend:", error);
     throw error;
   }
 }

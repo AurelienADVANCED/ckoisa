@@ -32,7 +32,6 @@ export default function FriendsScreen() {
   // Fonction pour récupérer les amis
   const fetchFriends = async () => {
     if (!token) {
-      // Si pas de token, on ne fait rien, mais on passe à false pour arrêter l'indicateur de chargement.
       setLoading(false);
       return;
     }
@@ -46,14 +45,13 @@ export default function FriendsScreen() {
       }));
       setFriends(uiFriends);
     } catch (error) {
-      console.error("Erreur lors de la récupération des amis :", error);
       Alert.alert("Erreur", "Impossible de récupérer vos amis.");
     } finally {
       setLoading(false);
     }
   };
 
-  // useFocusEffect permet de recharger les données à chaque fois que l'écran devient actif.
+  // useFocusEffect pour recharger les données à chaque activation de l'écran
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
@@ -61,7 +59,6 @@ export default function FriendsScreen() {
     }, [token])
   );
 
-  // Rendu conditionnel selon si l'utilisateur est connecté ou non et si les données sont chargées
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       {/* Si l'utilisateur n'est pas connecté */}
@@ -114,7 +111,7 @@ export default function FriendsScreen() {
             contentContainerStyle={styles.friendListContent}
           />
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, { bottom: insets.bottom + 50 }]}
             onPress={() => router.push('/addfriendscreen')}
           >
             <Ionicons name="add" size={24} color="#fff" />
@@ -207,7 +204,6 @@ const styles = StyleSheet.create({
   },
   addButton: {
     position: 'absolute',
-    bottom: 20,
     right: 20,
     backgroundColor: '#e91e63',
     borderRadius: 25,

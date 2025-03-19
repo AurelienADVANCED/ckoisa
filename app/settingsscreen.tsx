@@ -45,7 +45,6 @@ export default function SettingsScreen() {
           });
         }
       } catch (err: any) {
-        console.error("Erreur lors de la récupération des settings :", err);
         setError("Impossible de récupérer vos paramètres.");
       } finally {
         setLoading(false);

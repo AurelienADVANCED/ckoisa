@@ -40,7 +40,6 @@ export default function ScoreboardScreen() {
       mappedPlayers.sort((a, b) => b.score - a.score);
       setPlayers(mappedPlayers);
     } catch (error: any) {
-      console.error("Erreur lors de la récupération du scoreboard:", error);
       Alert.alert("Erreur", "Impossible de récupérer le scoreboard.");
     } finally {
       setLoading(false);

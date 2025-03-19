@@ -103,7 +103,6 @@ export default function GameScreen() {
           await refreshUserInfo();
           setStatsUpdated(true);
         } catch (err) {
-          console.error("Erreur lors de la mise à jour des stats:", err);
         }
       };
       updateStats();
