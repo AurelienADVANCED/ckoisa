@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { AuthProvider } from '../src/contexts/AuthContext';
 import { useUnauthorizedHandler } from '../src/hooks/useUnauthorizedHandler';
 import 'react-native-reanimated';
+import { AppExitHandler } from '@/components/AppExitHandler';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -33,6 +34,7 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <AppExitHandler />
         <Stack
         screenOptions={{
             headerShown: false,
