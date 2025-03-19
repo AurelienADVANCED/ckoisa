@@ -27,7 +27,7 @@ export default function LoginScreen() {
     }
     try {
       await login(email, password);
-      router.push('/profilescreen');
+      router.replace('/profilescreen');
     } catch (error: any) {
       setErrorMessage(error.message || 'Connexion échouée');
     }
@@ -59,7 +59,7 @@ export default function LoginScreen() {
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Se connecter</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.registerLink} onPress={() => router.push('/register')}>
+      <TouchableOpacity style={styles.registerLink} onPress={() => router.replace('/register')}>
         <Text style={styles.registerLinkText}>Créer un compte</Text>
       </TouchableOpacity>
     </SafeAreaView>

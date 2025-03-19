@@ -152,7 +152,7 @@ export default function ChallengeScreen() {
             await createGame(friendUUID, finalImageUrl);
             Alert.alert("Succès", "Défi envoyé à votre ami !");
             // Retourner à l'accueil
-            router.push("/");
+            router.replace("/");
         } catch (error: any) {
             Alert.alert('Erreur', error.message || "L’upload a échoué");
         }

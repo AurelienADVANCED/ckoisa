@@ -32,7 +32,7 @@ export default function RegisterScreen() {
       // Se connecter automatiquement après l'inscription
       await login(username, password);
       Alert.alert('Succès', 'Utilisateur créé et connecté avec succès.');
-      router.push('/profilescreen');
+      router.replace('/profilescreen');
     } catch (error: any) {
       Alert.alert('Erreur', error.message || 'Échec de l\'inscription');
     }
@@ -74,7 +74,7 @@ export default function RegisterScreen() {
       <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
         <Text style={styles.registerButtonText}>S'inscrire</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.loginLink} onPress={() => router.push('/loginscreen')}>
+      <TouchableOpacity style={styles.loginLink} onPress={() => router.replace('/loginscreen')}>
         <Text style={styles.loginLinkText}>Vous avez déjà un compte ? Connectez-vous</Text>
       </TouchableOpacity>
     </SafeAreaView>

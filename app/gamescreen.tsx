@@ -119,7 +119,7 @@ export default function GameScreen() {
           <Text style={styles.endGameText}>
             Vous avez trouvé la bonne réponse en {currentStep} étape(s) avec {mistakeCount} erreur(s).
           </Text>
-          <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/')}>
+          <TouchableOpacity style={styles.homeButton} onPress={() => router.replace('/')}>
             <Text style={styles.homeButtonText}>Retour à l'écran d'accueil</Text>
           </TouchableOpacity>
         </View>
@@ -142,7 +142,7 @@ export default function GameScreen() {
           <Text style={styles.endGameText}>
             {loseMessage} (Étapes utilisées : {currentStep}, Erreurs : {mistakeCount})
           </Text>
-          <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/')}>
+          <TouchableOpacity style={styles.homeButton} onPress={() => router.replace('/')}>
             <Text style={styles.homeButtonText}>Retour à l'écran d'accueil</Text>
           </TouchableOpacity>
         </View>
