@@ -116,7 +116,7 @@ export default function ChallengeScreen() {
             await uploadFile(signedUrl, compressedUri);
             const finalImageUrl = `https://storage.googleapis.com/ckoisa/${fileName}`;
             // Navigation vers l'écran de jeu en passant les paramètres
-            router.push({
+            router.replace({
                 pathname: '/gamescreen',
                 params: {
                     challengeImage: finalImageUrl,

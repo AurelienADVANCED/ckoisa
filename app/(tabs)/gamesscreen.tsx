@@ -63,7 +63,7 @@ export default function GamesListScreen() {
     try {
       await deleteGame(token!, game.id);
       setGames(prev => prev.filter(g => g.id !== game.id));
-      router.replace({
+      router.push({
         pathname: '/gamescreen',
         params: {
           challengeImage: game.urlImage,

@@ -51,7 +51,7 @@ export default function ScoreboardScreen() {
   }, []);
 
   const goBack = () => {
-    router.push('/');
+    router.replace('/');
   };
 
   if (loading) {

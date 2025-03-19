@@ -11,7 +11,7 @@ export function useUnauthorizedHandler() {
   useEffect(() => {
     setUnauthorizedCallback(() => {
       logout();
-      router.push('/loginscreen'); 
+      router.replace('/loginscreen'); 
     });
   }, []);
 }
